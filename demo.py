@@ -52,7 +52,7 @@ def make_dynamic_obstacle(obstacle_id, data, w=1.8, l=4.3):
     return obstacle
 
 
-file_path = 'scenarios/ZAM_Tutorial-1_2_T-1.xml'
+file_path = './scenarios/ZAM_Tutorial-1_2_T-1.xml'
 scenario, planning_problem_set = CommonRoadFileReader(file_path).open()
 
 # remove existing obstacles
@@ -60,10 +60,10 @@ for obst in scenario.obstacles:
     scenario.remove_obstacle(obst)
 
 # read sample log
-sample = read_sample_log('./sampling.log')
+sample = read_sample_log('./uppaal_model/sampling.log')
 
 # divide data into obstacle states and ego states
-obst_states, ego_stats = [], []
+obst_states, ego_states = [], []
 for row in sample:
     t = int(row[0])
     obst_states.append([t] + row[1:6])

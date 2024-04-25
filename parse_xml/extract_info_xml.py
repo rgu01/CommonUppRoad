@@ -9,7 +9,7 @@ import numpy as np
 input_file_folder = os.getcwd() + "\\data_xml"
 output_file_folder = os.getcwd() + "\\output_xml"
 
-xml_file = "ZAM_Ramp-1_1-T-1.xml" # "ZAM_Tutorial-1_2_T-1.xml" or "DEU_Ffb-1_3_T-1.xml" or "ZAM_Ramp-1_1-T-1.xml"
+xml_file = "DEU_Ffb-1_3_T-1.xml" # "ZAM_Tutorial-1_2_T-1.xml" or "DEU_Ffb-1_3_T-1.xml" or "ZAM_Ramp-1_1-T-1.xml"
 xml_file_path = input_file_folder + "\\" + xml_file
 file_name, _ = os.path.splitext(xml_file)
 
@@ -130,9 +130,13 @@ with open(output_file, "w") as file:
     file.write("\n")
 
     for i in range(MAXL):
-        file.write(ST_BOUND_leftLane_str_set[i] + "\n")
-        file.write(ST_BOUND_rightLane_str_set[i] + "\n")
-        file.write(ST_LANE_lane_str_set[i] + "\n")
+        # replace 'False, True, None' in python to 'false, true, NONE' in c
+        ST_BOUND_leftLane = ST_BOUND_leftLane_str_set[i].replace('False', 'false').replace('True', 'true')
+        ST_BOUND_rightLane = ST_BOUND_rightLane_str_set[i].replace('False', 'false').replace('True', 'true')
+        ST_LANE_lane = ST_LANE_lane_str_set[i].replace('False', 'false').replace('True', 'true').replace('None', 'NONE')
+        file.write(ST_BOUND_leftLane + "\n")
+        file.write(ST_BOUND_rightLane + "\n")
+        file.write(ST_LANE_lane + "\n")
         file.write("\n")
     
     file.write(ST_LANE_laneNet_str + "\n")

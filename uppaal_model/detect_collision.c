@@ -133,7 +133,7 @@ int main() {
     
     int is_collsion = check_collision(veh_st_rect1, veh_st_rect2, DIS_THRES);
     if(is_collsion == 1)
-        printf("collision detected");
+        printf("collision detected!");
     
     return 0;
 }

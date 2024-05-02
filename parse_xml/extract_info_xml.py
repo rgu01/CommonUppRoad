@@ -10,7 +10,7 @@ from utils import write_large_block
 input_file_folder = os.path.dirname(__file__) + "\\data_xml"
 output_file_folder = os.path.dirname(__file__) + "\\output_xml"
 
-xml_file = "ZAM_Ramp-1_1-T-1.xml" # "ZAM_Tutorial-1_2_T-1.xml" or "DEU_Ffb-1_3_T-1.xml" or "ZAM_Ramp-1_1-T-1.xml"
+xml_file = "ZAM_Tutorial-1_2_T-1.xml" # "ZAM_Tutorial-1_2_T-1.xml" or "DEU_Ffb-1_3_T-1.xml" or "ZAM_Ramp-1_1-T-1.xml"
 xml_file_path = input_file_folder + "\\" + xml_file
 file_name, _ = os.path.splitext(xml_file)
 
@@ -24,6 +24,13 @@ SCALE = 100 # the scaling factor from double to int
 scenario, planning_problem_set = CommonRoadFileReader(xml_file_path).open()
 
 # MAXP is to set the maximal number of points of a lane
+for lane in scenario.lanelet_network.lanelets:
+    # merge the lane points if they are on the same straight line 
+    if np.all(lane._left_vertices[:, 1] == lane._left_vertices[0, 1]) or np.all(lane._left_vertices[:, 0] == lane._left_vertices[0, 0]):
+        lane._left_vertices = lane._left_vertices[[0, -1]]
+    if np.all(lane._right_vertices[:, 1] == lane._right_vertices[0, 1]) or np.all(lane._right_vertices[:, 0] == lane._right_vertices[0, 0]):
+        lane._right_vertices = lane._right_vertices[[0, -1]]
+
 MAXP = max(len(lane._left_vertices) for lane in scenario.lanelet_network.lanelets)
 # MAXL is the number of lanes in the lanelet network
 MAXL = len(scenario.lanelet_network.lanelets)

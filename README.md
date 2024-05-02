@@ -5,5 +5,9 @@ demo.py: demo codes for showing how the transformation between CommonRoad and Up
 
 # Prerequisites
 Python 3.10
+
 CommonRoad-io
+
 ffmpeg 1.4
+
+Uppaal 5.1.10-beta5

@@ -3,13 +3,14 @@ import sys
 import logging
 import os
 import numpy as np
+from utils import write_large_block
 
 
 # %% load the files and parameters
-input_file_folder = os.getcwd() + "\\data_xml"
-output_file_folder = os.getcwd() + "\\output_xml"
+input_file_folder = os.path.dirname(__file__) + "\\data_xml"
+output_file_folder = os.path.dirname(__file__) + "\\output_xml"
 
-xml_file = "DEU_Ffb-1_3_T-1.xml" # "ZAM_Tutorial-1_2_T-1.xml" or "DEU_Ffb-1_3_T-1.xml" or "ZAM_Ramp-1_1-T-1.xml"
+xml_file = "ZAM_Ramp-1_1-T-1.xml" # "ZAM_Tutorial-1_2_T-1.xml" or "DEU_Ffb-1_3_T-1.xml" or "ZAM_Ramp-1_1-T-1.xml"
 xml_file_path = input_file_folder + "\\" + xml_file
 file_name, _ = os.path.splitext(xml_file)
 
@@ -28,6 +29,11 @@ MAXP = max(len(lane._left_vertices) for lane in scenario.lanelet_network.lanelet
 MAXL = len(scenario.lanelet_network.lanelets)
 # MAXSO is the number of static obstacles
 MAXSO = len(scenario.static_obstacles)
+# MAXPRE is the maximal number of predecessor lanes 
+MAXPRE = max(len(lane.predecessor) for lane in scenario.lanelet_network.lanelets)
+# MAXSUC is the maximal number of successor lanes 
+MAXSUC = max(len(lane.successor) for lane in scenario.lanelet_network.lanelets)
+
 
 
 # %% construct the lanelet network declaration in c code
@@ -38,8 +44,8 @@ ST_LANE_laneNet_str = []
 for i, lane in enumerate(scenario.lanelet_network.lanelets):
     # get lane information
     lane_ID = lane.lanelet_id
-    lane_predecessor = None if lane.predecessor == [] else lane.predecessor # TODO: check predecessor and successor, they can be multiple
-    lane_successor = None if lane.successor == [] else lane.successor
+    lane_predecessor = [] if lane.predecessor == [] else lane.predecessor # TODO: check predecessor and successor, they can be multiple
+    lane_successor = [] if lane.successor == [] else lane.successor
     lane_adjLeft = lane.adj_left
     lane_adjRight = lane.adj_right
 
@@ -61,12 +67,16 @@ for i, lane in enumerate(scenario.lanelet_network.lanelets):
         rightLane = rightLane[[0, -1]]
 
     # construct the string declaration
-    leftLane_str = "{" + ", ".join(["{" + ", ".join(map(str, point)) + "}" for point in leftLane]) + "}" # e.g., '{{-86, 7}, {-64, 6}}'
+    # append {NONE, NONE} to meet the fixed-length array
+    leftLane_str = "{" + ", ".join(["{" + ", ".join(map(str, point)) + "}" for point in leftLane]) + (MAXP - len(leftLane))*", {NONE, NONE}" + "}" # e.g., '{{-86, 7}, {-64, 6}, {NONE, NONE}}'
     ST_BOUND_left = f"const ST_BOUND leftLane{i + 1} = {{{leftLane_str}, {lane_markingLeft}}};" # e.g., 'const ST_BOUND leftLane1 = {{{-86, 7}, {-64, 6}}, True};'
-    rightLane_str = "{" + ", ".join(["{" + ", ".join(map(str, point)) + "}" for point in rightLane]) + "}"
+    rightLane_str = "{" + ", ".join(["{" + ", ".join(map(str, point)) + "}" for point in rightLane]) + (MAXP - len(rightLane))*", {NONE, NONE}" + "}"
     ST_BOUND_right = f"const ST_BOUND rightLane{i + 1} = {{{rightLane_str}, {lane_markingRight}}};"
 
     # construct the lane string declaration, e.g., 'const ST_LANE lane1 ={1, leftLane1, rightLane1, None, None, 2, False, None, False'
+    # extend the lane_predecessor and lane_successor to meet the fixed-length array
+    lane_predecessor += (MAXPRE - len(lane_predecessor))*[None]
+    lane_successor += (MAXSUC - len(lane_successor))*[None]
     ST_LANE_lane = f"const ST_LANE lane{i + 1} = " + "{" + ", ".join([f"{lane_ID}", f"leftLane{i + 1}", f"rightLane{i + 1}", 
                                                                      f"{lane_predecessor}", f"{lane_successor}", f"{lane_adjLeft}",
                                                                      f"{lane_dirLeft}", f"{lane_adjRight}", f"{lane_dirRight}"]) + "};"
@@ -89,7 +99,12 @@ for static_obs in scenario.static_obstacles:
     ST_RECTANGLE_obs_pos = "{" + ", ".join(map(str, obs_pos)) + "}"
     ST_RECTANGLE_obs_str_single = "{" + ", ".join([ST_RECTANGLE_obs_pos, f"{obs_width}", f"{obs_length}", f"{obs_ori}"]) + "}" # e.g., {{2000, 700}, 200, 450, 0}
     ST_RECTANGLE_obs_str_set.append(ST_RECTANGLE_obs_str_single)
-ST_RECTANGLE_obs_str = "const ST_RECTANGLE staticObs[MAXSO] = {" + ", ".join(ST_RECTANGLE_obs_str_set) + "};" # e.g., const ST_RECTANGLE staticObs[MAXSO] = {{{2000, 700}, 200, 450, 0}};
+
+# If static obstacles is zero, do not define “statisObs[MAXSO]”.
+if len(ST_RECTANGLE_obs_str_set) == 0:
+    ST_RECTANGLE_obs_str = ""
+else:
+    ST_RECTANGLE_obs_str = "const ST_RECTANGLE staticObs[MAXSO] = {" + ", ".join(ST_RECTANGLE_obs_str_set) + "};" # e.g., const ST_RECTANGLE staticObs[MAXSO] = {{{2000, 700}, 200, 450, 0}};
 
 
 # %% construct the goal declaration
@@ -117,23 +132,30 @@ ST_PLANNING_str = "const ST_PLANNING planning = {" + ", ".join(ST_PLANNING_str_s
 
 # %% construct the definition and hyperparameter declaration in c code
 MAXL_str = f"const int MAXL = {MAXL};"
+NONE_str = "const int NONE = -1;"
 MAXP_str = f"const int MAXP = {MAXP};"
 MAXSO_str = f"const int MAXSO = {MAXSO};"
+MAXPRE_str = f"const int MAXPRE = {MAXPRE};"
+MAXSUC_str = f"const int MAXSUC = {MAXSUC};"
 
 
 # %% write in the .txt file
 # Open a file in write mode
 with open(output_file, "w") as file:
     file.write(MAXP_str + "\n")
+    file.write(NONE_str + "\n")
     file.write(MAXL_str + "\n")
     file.write(MAXSO_str + "\n")
-    file.write("\n")
+    file.write(MAXPRE_str + "\n")
+    file.write(MAXSUC_str + "\n")
+    # Call the function to write the large static block
+    write_large_block(file)
 
     for i in range(MAXL):
         # replace 'False, True, None' in python to 'false, true, NONE' in c
         ST_BOUND_leftLane = ST_BOUND_leftLane_str_set[i].replace('False', 'false').replace('True', 'true')
         ST_BOUND_rightLane = ST_BOUND_rightLane_str_set[i].replace('False', 'false').replace('True', 'true')
-        ST_LANE_lane = ST_LANE_lane_str_set[i].replace('False', 'false').replace('True', 'true').replace('None', 'NONE')
+        ST_LANE_lane = ST_LANE_lane_str_set[i].replace('False', 'false').replace('True', 'true').replace('None', 'NONE').replace('[', '{').replace(']', '}')
         file.write(ST_BOUND_leftLane + "\n")
         file.write(ST_BOUND_rightLane + "\n")
         file.write(ST_LANE_lane + "\n")

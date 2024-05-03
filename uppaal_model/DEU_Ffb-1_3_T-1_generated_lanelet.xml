@@ -5,91 +5,91 @@
 const int MAXP = 22;
 const int NONE = -1;
 const int MAXL = 20;
-const int MAXSO = 0;
+const int MAXSO = 1;
 const int MAXPRE = 3;
 const int MAXSUC = 3;
 
 typedef int[-1,65535] id_t;
 
 typedef struct {
-	int32_t x;
-	int32_t y;
+    int32_t x;
+    int32_t y;
 }ST_DPOINT;
 
 typedef struct {
-	double x;
-	double y;
+    double x;
+    double y;
 }ST_CPOINT;
 
 typedef struct {
-	ST_DPOINT ends[2];
+    ST_DPOINT ends[2];
 }ST_DLINE;
 
 typedef struct {
-	ST_DPOINT points[MAXP];
-	bool dashLine;
+    ST_DPOINT points[MAXP];
+    bool dashLine;
 }ST_BOUND;
 
 typedef struct {
-	id_t ID;
-	ST_BOUND left;
-	ST_BOUND right;
-	id_t predecessor[MAXPRE];
-	id_t successor[MAXSUC];
-	id_t adjLeft;
-	bool dirLeft;
-	id_t adjRight;
-	bool dirRight;
+    id_t ID;
+    ST_BOUND left;
+    ST_BOUND right;
+    id_t predecessor[MAXPRE];
+    id_t successor[MAXSUC];
+    id_t adjLeft;
+    bool dirLeft;
+    id_t adjRight;
+    bool dirRight;
 }ST_LANE;
 
 typedef struct {
-	bool collide; // collision
-	bool outside; // outside road
-	bool reach;   // reach the goal
+    bool collide; // collision
+    bool outside; // outside road
+    bool reach;   // reach the goal
 }ST_DETECTION;
 
 typedef struct {
-	ST_CPOINT position;
-	double velocity;
-	double orientation;
-	double acceleration;
-	double yawRate;
+    ST_CPOINT position;
+    double velocity;
+    double orientation;
+    double acceleration;
+    double yawRate;
 }ST_CSTATE;
 
 typedef struct {
-	ST_DPOINT position;
-	int16_t velocity;
-	int16_t orientation;
-	int16_t acceleration;
-	int16_t yawRate;
-	ST_DETECTION detection;
+    ST_DPOINT position;
+    int16_t velocity;
+    int16_t orientation;
+    int16_t acceleration;
+    int16_t yawRate;
+    ST_DETECTION detection;
 }ST_DSTATE;
 
 typedef struct {
-	hybrid clock x;
-	hybrid clock y;
-	hybrid clock velocity;
-	hybrid clock orientation;
-	hybrid clock acceleration;
-	hybrid clock yawRate;
+    hybrid clock x;
+    hybrid clock y;
+    hybrid clock velocity;
+    hybrid clock orientation;
+    hybrid clock acceleration;
+    hybrid clock yawRate;
 }ST_VARIABLES;
 
 typedef struct {
-	ST_DPOINT center;
-	int16_t width;
-	int16_t length;
-	int16_t orientation;
+    ST_DPOINT center;
+    int16_t width;
+    int16_t length;
+    int16_t orientation;
 }ST_RECTANGLE;
 
 typedef struct {
-	int maxVelocity;
-	int minVelocity;
-	int maxOrientation;
-	int minOrientation;
+    int maxVelocity;
+    int minVelocity;
+    int maxOrientation;
+    int minOrientation;
 }ST_RULES;
 
 typedef struct {
-	ST_DPOINT goal;
+    ST_DPOINT goal;
 }ST_PLANNING;
 const ST_BOUND leftLane1 = {{{-8644, 774}, {-6402, 640}, {-6297, 632}, {-4099, 456}, {-4064, 453}, {-2009, 290}, {-97, 198}, {2419, 149}, {4821, 256}, {5529, 294}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}}, false};
 const ST_BOUND rightLane1 = {{{-8722, 161}, {-6413, 112}, {-6339, 111}, {-4134, 28}, {-4097, 25}, {-2030, -131}, {-104, -170}, {2405, -258}, {4828, -225}, {5599, -225}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}}, false};
@@ -173,7 +173,8 @@ const ST_LANE lane20 = {49602, leftLane20, rightLane20, {49564, NONE, NONE}, {49
 
 const ST_LANE laneNet[MAXL] = {lane1, lane2, lane3, lane4, lane5, lane6, lane7, lane8, lane9, lane10, lane11, lane12, lane13, lane14, lane15, lane16, lane17, lane18, lane19, lane20};
 
-
+const bool staticObsExists = false;
+const ST_RECTANGLE staticObs[MAXSO] = {{{NONE, NONE}, NONE, NONE, NONE}};
 
 const ST_PLANNING planning = {{6976, 1952}};
 
@@ -227,17 +228,12 @@ double getDisP2L(const ST_DPOINT &amp;p, const ST_DLINE &amp;l) {
 }
 
 const double THRESHOLD = 2.0;
-bool collision(const ST_RECTANGLE &amp;obj) {
+bool collision(const ST_RECTANGLE &amp;obj, ST_RECTANGLE staticObs) {
     double distance;
-    uint8_t i = 0;
-
-    for(i = 0; i &lt; MAXSO; i++) {
-        distance = getDisP2P(obj.center, staticObs[i].center);
-        if(distance &lt;= THRESHOLD) {
-            return true;
-        }
+    distance = getDisP2P(obj.center, staticObs.center);
+    if(distance &lt;= THRESHOLD) {
+        return true;
     }
-
     return false;
 }
 
@@ -285,6 +281,7 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     double rOrientation = 0.0, rAcceleration = 0.0, rYawRate = 0.0;
     // int/real numbers of velocity on X and Y axes
     int dVx = 0, dVy = 0;
+    uint8_t i = 0;
 
     // update discrete velocity and orientation
     dState.velocity = dState.velocity + dState.acceleration * P;
@@ -305,9 +302,13 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     shape.center.x = dState.position.x;
     shape.center.y = dState.position.y;
     shape.orientation = dState.orientation;
-    dState.detection.collide = collision(shape);
     dState.detection.outside = outOfRoad(shape);
     dState.detection.reach = (getDisP2P(shape.center, planning.goal) &lt;= THRESHOLD);
+    if(staticObsExists) {
+        for(i = 0; i &lt; MAXSO; i++) {
+            dState.detection.collide |= collision(shape, staticObs[i]);
+        }
+    }
 }
 
 void updateCon(ST_VARIABLES &amp;vars) {

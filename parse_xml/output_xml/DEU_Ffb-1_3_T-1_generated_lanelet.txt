@@ -1,7 +1,7 @@
 const int MAXP = 22;
 const int NONE = -1;
 const int MAXL = 20;
-const int MAXSO = 0;
+const int MAXSO = 1;
 const int MAXPRE = 3;
 const int MAXSUC = 3;
 
@@ -169,7 +169,8 @@ const ST_LANE lane20 = {49602, leftLane20, rightLane20, {49564, NONE, NONE}, {49
 
 const ST_LANE laneNet[MAXL] = {lane1, lane2, lane3, lane4, lane5, lane6, lane7, lane8, lane9, lane10, lane11, lane12, lane13, lane14, lane15, lane16, lane17, lane18, lane19, lane20};
 
-
+const bool staticObsExists = false;
+const ST_RECTANGLE staticObs[MAXSO] = {{{NONE, NONE}, NONE, NONE, NONE}};
 
 const ST_PLANNING planning = {{6976, 1952}};
 

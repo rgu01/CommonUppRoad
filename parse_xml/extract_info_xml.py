@@ -10,7 +10,7 @@ from utils import write_large_block
 input_file_folder = os.path.dirname(__file__) + "\\data_xml"
 output_file_folder = os.path.dirname(__file__) + "\\output_xml"
 
-xml_file = "ZAM_Tutorial-1_2_T-1.xml" # "ZAM_Tutorial-1_2_T-1.xml" or "DEU_Ffb-1_3_T-1.xml" or "ZAM_Ramp-1_1-T-1.xml"
+xml_file = "ZAM_Ramp-1_1-T-1.xml" # "ZAM_Tutorial-1_2_T-1.xml" or "DEU_Ffb-1_3_T-1.xml" or "ZAM_Ramp-1_1-T-1.xml"
 xml_file_path = input_file_folder + "\\" + xml_file
 file_name, _ = os.path.splitext(xml_file)
 
@@ -35,11 +35,11 @@ MAXP = max(len(lane._left_vertices) for lane in scenario.lanelet_network.lanelet
 # MAXL is the number of lanes in the lanelet network
 MAXL = len(scenario.lanelet_network.lanelets)
 # MAXSO is the number of static obstacles
-MAXSO = len(scenario.static_obstacles)
+MAXSO = max(1, len(scenario.static_obstacles))
 # MAXPRE is the maximal number of predecessor lanes 
-MAXPRE = max(len(lane.predecessor) for lane in scenario.lanelet_network.lanelets)
+MAXPRE = max(1, max(len(lane.predecessor) for lane in scenario.lanelet_network.lanelets))
 # MAXSUC is the maximal number of successor lanes 
-MAXSUC = max(len(lane.successor) for lane in scenario.lanelet_network.lanelets)
+MAXSUC = max(1, max(len(lane.successor) for lane in scenario.lanelet_network.lanelets))
 
 
 
@@ -109,9 +109,12 @@ for static_obs in scenario.static_obstacles:
 
 # If static obstacles is zero, do not define “statisObs[MAXSO]”.
 if len(ST_RECTANGLE_obs_str_set) == 0:
-    ST_RECTANGLE_obs_str = ""
+    ST_RECTANGLE_obs_str1 = "const bool staticObsExists = false;"
+    ST_RECTANGLE_obs_str2 = "const ST_RECTANGLE staticObs[MAXSO] = {{{NONE, NONE}, NONE, NONE, NONE}};"
+
 else:
-    ST_RECTANGLE_obs_str = "const ST_RECTANGLE staticObs[MAXSO] = {" + ", ".join(ST_RECTANGLE_obs_str_set) + "};" # e.g., const ST_RECTANGLE staticObs[MAXSO] = {{{2000, 700}, 200, 450, 0}};
+    ST_RECTANGLE_obs_str1 = "const bool staticObsExists = true;"
+    ST_RECTANGLE_obs_str2 = "const ST_RECTANGLE staticObs[MAXSO] = {" + ", ".join(ST_RECTANGLE_obs_str_set) + "};" # e.g., const ST_RECTANGLE staticObs[MAXSO] = {{{2000, 700}, 200, 450, 0}};
 
 
 # %% construct the goal declaration
@@ -171,7 +174,8 @@ with open(output_file, "w") as file:
     file.write(ST_LANE_laneNet_str + "\n")
     file.write("\n")
 
-    file.write(ST_RECTANGLE_obs_str + "\n")
+    file.write(ST_RECTANGLE_obs_str1 + "\n")
+    file.write(ST_RECTANGLE_obs_str2 + "\n")
     file.write("\n")
 
     file.write(ST_PLANNING_str + "\n")

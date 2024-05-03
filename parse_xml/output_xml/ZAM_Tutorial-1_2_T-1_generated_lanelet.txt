@@ -2,8 +2,8 @@ const int MAXP = 2;
 const int NONE = -1;
 const int MAXL = 3;
 const int MAXSO = 1;
-const int MAXPRE = 0;
-const int MAXSUC = 0;
+const int MAXPRE = 1;
+const int MAXSUC = 1;
 
 typedef int[-1,65535] id_t;
 
@@ -89,18 +89,19 @@ typedef struct {
 }ST_PLANNING;
 const ST_BOUND leftLane1 = {{{0, 175}, {19900, 175}}, false};
 const ST_BOUND rightLane1 = {{{0, -175}, {19900, -175}}, false};
-const ST_LANE lane1 = {1, leftLane1, rightLane1, {}, {}, 2, false, NONE, false};
+const ST_LANE lane1 = {1, leftLane1, rightLane1, {NONE}, {NONE}, 2, false, NONE, false};
 
 const ST_BOUND leftLane2 = {{{0, 525}, {19900, 525}}, false};
 const ST_BOUND rightLane2 = {{{0, 175}, {19900, 175}}, false};
-const ST_LANE lane2 = {2, leftLane2, rightLane2, {}, {}, 3, true, 1, false};
+const ST_LANE lane2 = {2, leftLane2, rightLane2, {NONE}, {NONE}, 3, true, 1, false};
 
 const ST_BOUND leftLane3 = {{{0, 875}, {19900, 875}}, false};
 const ST_BOUND rightLane3 = {{{0, 525}, {19900, 525}}, false};
-const ST_LANE lane3 = {3, leftLane3, rightLane3, {}, {}, NONE, false, 2, true};
+const ST_LANE lane3 = {3, leftLane3, rightLane3, {NONE}, {NONE}, NONE, false, 2, true};
 
 const ST_LANE laneNet[MAXL] = {lane1, lane2, lane3};
 
+const bool staticObsExists = true;
 const ST_RECTANGLE staticObs[MAXSO] = {{{3000, 350}, 200, 450, 2}};
 
 const ST_PLANNING planning = {{9950, 0}};

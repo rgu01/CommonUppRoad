@@ -165,11 +165,11 @@ bool collision(const ST_RECTANGLE &amp;obj, ST_RECTANGLE staticObs) {
 }
 
 bool outOfRoad(const ST_RECTANGLE &amp;obj) {
-    if(obj.center.x &lt; lane1.left.points[0].x || obj.center.x &gt; lane1.left.points[1].x)
+    /*if(obj.center.x &lt; lane1.left.points[0].x || obj.center.x &gt; lane1.left.points[1].x)
         return true;
     if(obj.center.y &lt; lane1.right.points[0].y || obj.center.y &gt; lane3.left.points[0].y)   
         return true;
-
+    */
     return false;  
 }
 

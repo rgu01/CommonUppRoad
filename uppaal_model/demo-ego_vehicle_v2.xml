@@ -8,6 +8,7 @@ const int MAXL = 11;
 const int MAXSO = 1;
 const int MAXPRE = 1;
 const int MAXSUC = 1;
+const double SCALE = 100.0; // scale from int to double: 100 = 1.0
 
 typedef int[-1,65535] id_t;
 
@@ -91,6 +92,7 @@ typedef struct {
 typedef struct {
     ST_DPOINT goal;
 }ST_PLANNING;
+
 const ST_BOUND leftLane1 = {{{0, -150}, {40, -142}, {81, -134}, {122, -127}, {163, -120}, {204, -113}, {244, -107}, {285, -101}, {326, -95}, {367, -89}, {408, -84}, {448, -79}, {489, -74}, {530, -70}, {571, -66}, {612, -61}, {653, -58}, {693, -54}, {734, -50}, {775, -47}, {816, -44}, {857, -40}, {897, -38}, {938, -35}, {979, -32}, {1020, -29}, {1061, -27}, {1102, -25}, {1142, -23}, {1183, -20}, {1224, -18}, {1265, -17}, {1306, -15}, {1346, -13}, {1387, -12}, {1428, -10}, {1469, -9}, {1510, -7}, {1551, -6}, {1591, -5}, {1632, -4}, {1673, -3}, {1714, -2}, {1755, -2}, {1795, -1}, {1836, 0}, {1877, 0}, {1918, 0}, {1959, 0}, {2000, 0}}, false};
 const ST_BOUND rightLane1 = {{{0, -500}, {40, -493}, {81, -488}, {122, -482}, {163, -476}, {204, -470}, {244, -465}, {285, -460}, {326, -455}, {367, -449}, {408, -445}, {448, -440}, {489, -435}, {530, -430}, {571, -426}, {612, -422}, {653, -418}, {693, -413}, {734, -410}, {775, -406}, {816, -402}, {857, -398}, {897, -395}, {938, -392}, {979, -389}, {1020, -385}, {1061, -383}, {1102, -380}, {1142, -377}, {1183, -374}, {1224, -372}, {1265, -370}, {1306, -368}, {1346, -365}, {1387, -364}, {1428, -362}, {1469, -360}, {1510, -358}, {1551, -357}, {1591, -356}, {1632, -355}, {1673, -353}, {1714, -353}, {1755, -352}, {1795, -351}, {1836, -350}, {1877, -350}, {1918, -350}, {1959, -350}, {2000, -350}}, false};
 const ST_LANE lane1 = {2, leftLane1, rightLane1, {NONE}, {2}, NONE, false, NONE, false};
@@ -163,13 +165,11 @@ hybrid clock D;         /// "cost" of distance used in strategy optimization
 clock time;             // global time
 
 double i2d(const int i) {
-    const double SCALE = 100.0; // scale from int to double: 100 = 1.0
     double v = i/SCALE;
     return v;
 }
 
 int d2i(const double i) {
-    const double SCALE = 100.0; // scale from int to double: 100 = 1.0
     int v = fint(i*SCALE);
     return v;
 }
@@ -200,13 +200,142 @@ bool collision(const ST_RECTANGLE &amp;obj, ST_RECTANGLE staticObs) {
     return false;
 }
 
-bool outOfRoad(const ST_RECTANGLE &amp;obj) {
-    if(obj.center.x &lt; lane1.left.points[0].x || obj.center.x &gt; lane1.left.points[1].x)
-        return true;
-    if(obj.center.y &lt; lane1.right.points[0].y || obj.center.y &gt; lane3.left.points[0].y)   
-        return true;
+// Function to calculate the corner points of a rectangle
+void calculateCornerPoints(ST_RECTANGLE veh_state, ST_DPOINT &amp;corners[4]) {
+    double halfLength = i2d(veh_state.length)/2.0;
+    double halfWidth = i2d(veh_state.width)/2.0;
+    double angle = i2d(veh_state.orientation);
 
-    return false;  
+    // Calculate the coordinates of each corner point based on the center, length, width, and orientation
+    corners[0].x = d2i(i2d(veh_state.center.x) + halfLength*cos(angle) - halfWidth*sin(angle));
+    corners[0].y = d2i(i2d(veh_state.center.y) + halfLength*sin(angle) + halfWidth*cos(angle));
+
+    corners[1].x = d2i(i2d(veh_state.center.x) + halfLength*cos(angle) + halfWidth*sin(angle));
+    corners[1].y = d2i(i2d(veh_state.center.y) + halfLength*sin(angle) - halfWidth*cos(angle));
+
+    corners[2].x = d2i(i2d(veh_state.center.x) - halfLength*cos(angle) + halfWidth*sin(angle));
+    corners[2].y = d2i(i2d(veh_state.center.y) - halfLength*sin(angle) - halfWidth*cos(angle));
+
+    corners[3].x = d2i(i2d(veh_state.center.x) - halfLength*cos(angle) - halfWidth*sin(angle));
+    corners[3].y = d2i(i2d(veh_state.center.y) - halfLength*sin(angle) + halfWidth*cos(angle));
+}
+
+// Function to check if all elements in the vector (size=4) have the same sign
+bool same_sign(int32_t vec[4]) {
+    int i = 0;
+    int sign = (vec[0] &gt;= 0) ? 1 : -1; // Get the sign of the first element
+    for (i = 1; i &lt; 4; i++) {
+        if ((vec[i] &gt;= 0) != (sign &gt;= 0)) {
+            return false; // Different signs found
+        }
+    }
+    return true; // All elements have the same sign
+}
+
+// Check if any corner of box2 is outside box1
+int check_coverage(ST_DPOINT box1[4], ST_DPOINT box2[4]) {
+    int i = 0, j = 0;
+    int abx = 0, aby = 0, apx = 0, apy = 0;
+    int32_t cross_prod[4];
+    int inside_sum = 0;
+    // Check if all corners of box2 fall outside the bounding box of box1   
+    for (i = 0; i &lt; 4; i++) {
+        // get the x y coordinate of the test points
+        for (j = 0; j &lt; 4; j++) {
+            abx = box1[(j+1)%4].x - box1[j].x; // when j+1=4, back to the first one
+            aby = box1[(j+1)%4].y - box1[j].y;
+            apx = box2[i].x - box1[j].x;
+            apy = box2[i].y - box1[j].y;
+            // cross product of ab and ap
+            cross_prod[j] = abx*apy - apx*aby;
+        }
+        // if all the cross production have the same sign, then the test point is within the box1
+        if (same_sign(cross_prod))
+            inside_sum++;
+    }
+    // check the sum of the identifier
+    if (inside_sum == 4)
+        return 2; // the box2 is fully inside the box1
+    else if (inside_sum == 0)
+        return 0; // the box2 is fully outside the box1
+    else
+        return 1; // the box2 is partially outside the box1, which means cross the lane
+}
+
+// Function to count non-zero elements in a 2D array
+int check_pts_num(ST_DPOINT lane_pts[MAXP]) {
+    int count = 0;
+    // NONE or 0?
+    while (count &lt; MAXP &amp;&amp; (lane_pts[count].x != NONE || lane_pts[count].y != NONE)){
+        count++;
+    }
+    return count;
+}
+
+// check if veh_state are not covered by a single lane, or if vehicle rectangle touches the edge of the lane
+int check_inlane_lane_single(ST_LANE lane, ST_RECTANGLE veh_state) {
+    int num_box = 0;
+    int i_box = 0;
+    int if_inlane = 0;
+
+    ST_DPOINT veh_corners[4];
+    // Calculate the corner points
+    calculateCornerPoints(veh_state, veh_corners);
+
+    // check the number of points in the lane
+    num_box = check_pts_num(lane.left.points) - 1;
+    for (i_box = 0; i_box &lt; num_box; i_box++){
+        // define the corner of the road box
+        ST_DPOINT box_corners[4];
+        box_corners[0] = lane.right.points[i_box];
+        box_corners[1] = lane.right.points[i_box + 1];
+        box_corners[2] = lane.left.points[i_box + 1];
+        box_corners[3] = lane.left.points[i_box];
+        // check if the inlane status of the vehicle box to the current box
+        if_inlane = check_coverage(box_corners, veh_corners);
+        if (if_inlane == 1)
+            // this means the vehicle cross the lane
+            return false;
+        else if (if_inlane == 2)
+            // this means the vehicle is within the lane
+            return true;            
+    }
+    // fully outside the lane network 
+    return false;
+}
+
+// check if veh_state are not covered by laneNet, or if vehicle rectangle touches laneNet
+// can this function call check_inlane_lane_single?
+int check_inlane_laneNet(ST_RECTANGLE veh_state) {
+    ST_DPOINT veh_corners[4];
+    int i_lane = 0;
+    int num_box = 0;
+    int i_box = 0;
+    int if_inlane = 0;
+    // Calculate the corner points
+    calculateCornerPoints(veh_state, veh_corners);
+    for(i_lane = 0; i_lane &lt; MAXL; i_lane++){
+        // check the number of points in each lane
+        num_box = check_pts_num(laneNet[i_lane].left.points) - 1;
+        for (i_box = 0; i_box &lt; num_box; i_box++){
+            // define the corner of the road box
+            ST_DPOINT box_corners[4];
+            box_corners[0] = laneNet[i_lane].right.points[i_box];
+            box_corners[1] = laneNet[i_lane].right.points[i_box + 1];
+            box_corners[2] = laneNet[i_lane].left.points[i_box + 1];
+            box_corners[3] = laneNet[i_lane].left.points[i_box];
+            // check if the inlane status of the vehicle box to the current box
+            if_inlane = check_coverage(box_corners, veh_corners);
+            if (if_inlane == 1)
+                // this means the vehicle cross the lane
+                return false;
+            else if (if_inlane == 2)
+                // this means the vehicle is within the lane
+                return true;            
+        }
+    }
+    // fully outside the lane network 
+    return false;
 }
 
 void initCon(ST_VARIABLES &amp;vars, const ST_CSTATE &amp;initCS) {
@@ -265,7 +394,7 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     shape.center.x = dState.position.x;
     shape.center.y = dState.position.y;
     shape.orientation = dState.orientation;
-    dState.detection.outside = outOfRoad(shape);
+    dState.detection.outside = check_inlane_laneNet(shape);
     dState.detection.reach = (getDisP2P(shape.center, planning.goal) &lt;= THRESHOLD);
     if(staticObsExists) {
         for(i = 0; i &lt; MAXSO; i++) {
@@ -453,7 +582,7 @@ bool canTurn(int dir) {
     nextShape.center.y = self.center.y + d2i(vy) * P;
     nextShape.orientation = nextOrientation;
 
-    if(nextOrientation &gt;= rules.minOrientation &amp;&amp; nextOrientation &lt;= rules.maxOrientation &amp;&amp; !outOfRoad(nextShape)) 
+    if(nextOrientation &gt;= rules.minOrientation &amp;&amp; nextOrientation &lt;= rules.maxOrientation &amp;&amp; !check_inlane_laneNet(nextShape)) 
         return true;
     return false;
 }</declaration>

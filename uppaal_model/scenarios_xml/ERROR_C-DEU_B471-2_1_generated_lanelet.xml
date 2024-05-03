@@ -91,6 +91,7 @@ typedef struct {
 typedef struct {
     ST_DPOINT goal;
 }ST_PLANNING;
+
 const ST_BOUND leftLane1 = {{{281, -159}, {-423, -1109}, {-579, -1309}, {-913, -1734}, {-1486, -2387}, {-1570, -2477}, {-2234, -3192}, {-2307, -3264}, {-2690, -3637}, {-3011, -3944}, {-3262, -4183}, {-3530, -4445}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}}, false};
 const ST_BOUND rightLane1 = {{{0, 0}, {-692, -903}, {-844, -1101}, {-1184, -1508}, {-1740, -2175}, {-1807, -2256}, {-2483, -2949}, {-2549, -3016}, {-2936, -3354}, {-3285, -3657}, {-3533, -3875}, {-3861, -4163}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}, {NONE, NONE}}, false};
 const ST_LANE lane1 = {31532, leftLane1, rightLane1, {NONE, NONE}, {31534, NONE}, 31572, false, NONE, false};

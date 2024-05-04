@@ -168,12 +168,13 @@ int check_pts_num(ST_DPOINT lane_pts[]) {
 }
 
 // check if veh_state are not covered by a single lane, or if vehicle rectangle touches the edge of the lane
-int check_inlane_lane_single(const ST_LANE lane, ST_RECTANGLE veh_state) {
+int check_inlane_lane_single(const ST_LANE lane, ST_RECTANGLE veh_state, ST_DPOINT veh_corners[], ST_DPOINT box_corners[]) {
     int num_box = 0;
     int i_box = 0;
     int if_inlane = 0;
 
-    ST_DPOINT veh_corners[4];
+    //ST_DPOINT veh_corners[4];
+    //ST_DPOINT box_corners[4];
     // Calculate the corner points
     calculateCornerPoints(veh_state, veh_corners);
 
@@ -181,7 +182,6 @@ int check_inlane_lane_single(const ST_LANE lane, ST_RECTANGLE veh_state) {
     num_box = check_pts_num(lane.left.points) - 1;
     for (i_box = 0; i_box < num_box; i_box++){
         // define the corner of the road box
-        ST_DPOINT box_corners[4];
         box_corners[0] = lane.right.points[i_box];
         box_corners[1] = lane.right.points[i_box + 1];
         box_corners[2] = lane.left.points[i_box + 1];
@@ -201,12 +201,14 @@ int check_inlane_lane_single(const ST_LANE lane, ST_RECTANGLE veh_state) {
 
 // check if veh_state are not covered by laneNet, or if vehicle rectangle touches laneNet
 // can this function call check_inlane_lane_single?
-int check_inlane_laneNet(const ST_LANE laneNet[], ST_RECTANGLE veh_state) {
-    ST_DPOINT veh_corners[4];
+int check_inlane_laneNet(ST_LANE laneNet[], ST_RECTANGLE veh_state, int *lane, ST_DPOINT veh_corners[], ST_DPOINT box_corners[]) {
     int i_lane = 0;
     int num_box = 0;
     int i_box = 0;
     int if_inlane = 0;
+    //ST_DPOINT veh_corners[4];
+    //ST_DPOINT box_corners[4];
+
     // Calculate the corner points
     calculateCornerPoints(veh_state, veh_corners);
     for(i_lane = 0; i_lane < MAXL; i_lane++){
@@ -214,22 +216,26 @@ int check_inlane_laneNet(const ST_LANE laneNet[], ST_RECTANGLE veh_state) {
         num_box = check_pts_num(laneNet[i_lane].left.points) - 1;
         for (i_box = 0; i_box < num_box; i_box++){
             // define the corner of the road box
-            ST_DPOINT box_corners[4];
             box_corners[0] = laneNet[i_lane].right.points[i_box];
             box_corners[1] = laneNet[i_lane].right.points[i_box + 1];
             box_corners[2] = laneNet[i_lane].left.points[i_box + 1];
             box_corners[3] = laneNet[i_lane].left.points[i_box];
             // check if the inlane status of the vehicle box to the current box
             if_inlane = check_coverage(box_corners, veh_corners);
-            if (if_inlane == 1)
+            if (if_inlane == 1) {
                 // this means the vehicle cross the lane
+                *lane = laneNet[i_lane].ID;
                 return false;
-            else if (if_inlane == 2)
+            }
+            else if (if_inlane == 2) {
                 // this means the vehicle is within the lane
-                return true;            
+                *lane = -1;
+                return true;      
+            }      
         }
     }
     // fully outside the lane network 
+    lane = MAXL + 1;
     return false;
 }
 
@@ -280,10 +286,15 @@ int main() {
 
     const ST_LANE laneNet[MAXL] = {lane1, lane2, lane3, lane4, lane5, lane6, lane7, lane8, lane9, lane10, lane11};
 
-    const ST_RECTANGLE ego = {{3000, 350}, 200, 450, 2};
+    const ST_RECTANGLE ego = {{276, 291}, 100, 450, 40};
 
-    bool is_inlane_net = check_inlane_laneNet(laneNet, ego);
-    bool is_inlane_id = check_inlane_lane_single(laneNet[1], ego);
+    int lane;
+    ST_DPOINT veh_corners[4], box_corners[4];
+
+    calculateCornerPoints(ego, veh_corners);
+
+    bool is_inlane_net = check_inlane_laneNet(laneNet, ego, &lane, veh_corners, box_corners);
+    bool is_inlane_id = check_inlane_lane_single(laneNet[3], ego, veh_corners, box_corners);
     
     if (is_inlane_net)
         printf("The vehicle is in the lane network.\n");

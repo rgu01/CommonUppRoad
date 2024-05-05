@@ -544,6 +544,7 @@ bool canTurn(int dir) {
         return true;
     return false;
 }
+
 void initDis(ST_DSTATE &amp;dState, const ST_CSTATE &amp;initCS) {
     dState.position.x = d2i(initCS.position.x);
     dState.position.y = d2i(initCS.position.y);
@@ -560,6 +561,7 @@ void initDis(ST_DSTATE &amp;dState, const ST_CSTATE &amp;initCS) {
     int lane = 0;
     ST_DPOINT veh_corners[4];
     ST_DPOINT box_corners[4];
+    bool outside[MAXL] = {false, false, false};
 void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     // real numbers of the current state
     double rVelocity = 0.0, vx = 0.0, vy = 0.0;
@@ -589,6 +591,9 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     shape.orientation = dState.orientation;
     //calculateCornerPoints(shape, veh_corners);
     dState.detection.outside = !check_inlane_laneNet(shape, lane, veh_corners, box_corners);
+    for(i = 0; i &lt; MAXL; i++) {
+        outside[i] = !check_inlane_lane_single(laneNet[i], shape, veh_corners, box_corners);
+    }
     //dState.detection.outside = !check_inlane_lane_single(lane4, shape, veh_corners, box_corners);
     dState.detection.reach = (getDisP2P(shape.center, planning.goal) &lt;= THRESHOLD);
     if(staticObsExists) {
@@ -932,7 +937,7 @@ system Decisions, egoController, egoDynamics;
 		<query>
 			<formula>A[] !dStateEgo.detection.outside</formula>
 			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-05-05 22:17:41 +0200">
+			<result outcome="failure" type="quality" timestamp="2024-05-05 22:52:31 +0200">
 				<option key="--diagnostic" value="0"/>
 			</result>
 		</query>

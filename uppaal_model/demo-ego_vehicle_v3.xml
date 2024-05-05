@@ -950,14 +950,14 @@ system Decisions, egoController, egoDynamics;
 		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside</formula>
 			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-05-04 16:13:47 +0200">
+			<result outcome="success" type="quality" timestamp="2024-05-05 21:32:35 +0200">
 				<option key="--diagnostic" value="0"/>
 			</result>
 		</query>
 		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.outside</formula>
 			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-05-04 16:14:15 +0200">
+			<result outcome="success" type="quality" timestamp="2024-05-05 21:30:31 +0200">
 				<option key="--diagnostic" value="0"/>
 			</result>
 		</query>

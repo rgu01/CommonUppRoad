@@ -557,6 +557,9 @@ void initDis(ST_DSTATE &amp;dState, const ST_CSTATE &amp;initCS) {
     dState.detection.reach = false;
 }
 
+    int lane = 0;
+    ST_DPOINT veh_corners[4];
+    ST_DPOINT box_corners[4];
 void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     // real numbers of the current state
     double rVelocity = 0.0, vx = 0.0, vy = 0.0;
@@ -564,9 +567,6 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     // int/real numbers of velocity on X and Y axes
     int dVx = 0, dVy = 0;
     uint8_t i = 0;
-    int lane = 0;
-    ST_DPOINT veh_corners[4];
-    ST_DPOINT box_corners[4];
 
     // update discrete velocity and orientation
     dState.velocity = dState.velocity + dState.acceleration * P;
@@ -869,7 +869,7 @@ const ST_CSTATE initCS1 = {{2.25, 3.50}, 2.30, 0.0, 0.0, 0.0};
 const ST_RECTANGLE shapeObs1 = {{225, 350}, 200, 450, 0};
 obs1 = MovingObs(1, initCS1, shapeObs1);
 
-const ST_CSTATE initEgo = {{-39, -0.4}, 3.0, 0.0, 0.0, 0.0};
+const ST_CSTATE initEgo = {{-39.0, -0.4}, 3.0, 0.0, 0.0, 0.0};
 const ST_RECTANGLE shapeEgo = {{-3900, -40}, 100, 450, 0};
 const ST_RULES rules = {400, 0, 157, -157}; 
 egoController = Controller(1, initEgo, shapeEgo, rules);
@@ -932,14 +932,14 @@ system Decisions, egoController, egoDynamics;
 		<query>
 			<formula>A[] !dStateEgo.detection.outside</formula>
 			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-05-03 16:27:22 +0200">
+			<result outcome="failure" type="quality" timestamp="2024-05-05 22:17:41 +0200">
 				<option key="--diagnostic" value="0"/>
 			</result>
 		</query>
 		<query>
 			<formula>E[] !dStateEgo.detection.outside</formula>
 			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-05-04 15:58:47 +0200">
+			<result outcome="failure" type="quality" timestamp="2024-05-05 22:24:24 +0200">
 				<option key="--diagnostic" value="0"/>
 			</result>
 		</query>
@@ -950,7 +950,14 @@ system Decisions, egoController, egoDynamics;
 		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside</formula>
 			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-05-04 15:58:03 +0200">
+			<result outcome="success" type="quality" timestamp="2024-05-05 21:32:35 +0200">
+				<option key="--diagnostic" value="0"/>
+			</result>
+		</query>
+		<query>
+			<formula>strategy safe = control:A[] !dStateEgo.detection.outside</formula>
+			<comment/>
+			<result outcome="failure" type="quality" timestamp="2024-05-05 22:24:28 +0200">
 				<option key="--diagnostic" value="0"/>
 			</result>
 		</query>

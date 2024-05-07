@@ -76,32 +76,68 @@ int check_online(ST_DPOINT pt1, ST_DPOINT pt2, ST_DPOINT pt3) {
 }
 
 // Check if any corner of box2 is outside box1
-int check_coverage(ST_DPOINT box1[], ST_DPOINT box2[]) {
-    int i = 0, j = 0;
-    int abx = 0, aby = 0, apx = 0, apy = 0;
-    int cross_prod[4];
+// int check_coverage(ST_DPOINT box1[], ST_DPOINT box2[]) {
+//     int i = 0, j = 0;
+//     int abx = 0, aby = 0, apx = 0, apy = 0;
+//     int cross_prod[4];
+//     int inside_sum = 0;
+//     int is_online = 0;
+//     // Check if all corners of box2 fall outside the bounding box of box1   
+//     for (i = 0; i < 4; i++) {
+//         // get the x y coordinate of the test points
+//         for (j = 0; j < 4; j++) {
+//             abx = box1[(j+1)%4].x - box1[j].x; // when j+1=4, back to the first one
+//             aby = box1[(j+1)%4].y - box1[j].y;
+//             apx = box2[i].x - box1[j].x;
+//             apy = box2[i].y - box1[j].y;
+//             // cross product of ab and ap
+//             cross_prod[j] = abx*apy - apx*aby;
+//             // check if on the line
+//             if (check_online(box2[i], box1[j], box1[(j+1)%4]) == 1)
+//                 is_online = 1;
+//         }
+//         // if all the cross production have the same sign, then the test point is within the box1
+//         if (same_sign(cross_prod) || is_online == 1)
+//             inside_sum++;
+//     }
+//     return inside_sum;
+// }
+
+int check_coverage(ST_DPOINT box1[4], ST_DPOINT box2[4]) {
+    int i, j;
+    int32_t abx[4], aby[4], apx, apy;
+    int32_t cross_prod[4];
     int inside_sum = 0;
     int is_online = 0;
-    // Check if all corners of box2 fall outside the bounding box of box1   
+    
+    // Pre-calculate abx and aby
+    for (j = 0; j < 4; j++) {
+        abx[j] = box1[(j+1)%4].x - box1[j].x;
+        aby[j] = box1[(j+1)%4].y - box1[j].y;
+    }
+
     for (i = 0; i < 4; i++) {
         // get the x y coordinate of the test points
+        apx = box2[i].x - box1[0].x;
+        apy = box2[i].y - box1[0].y;
+
         for (j = 0; j < 4; j++) {
-            abx = box1[(j+1)%4].x - box1[j].x; // when j+1=4, back to the first one
-            aby = box1[(j+1)%4].y - box1[j].y;
-            apx = box2[i].x - box1[j].x;
-            apy = box2[i].y - box1[j].y;
             // cross product of ab and ap
-            cross_prod[j] = abx*apy - apx*aby;
+            cross_prod[j] = abx[j]*apy - apx*aby[j];
             // check if on the line
-            if (check_online(box2[i], box1[j], box1[(j+1)%4]) == 1)
+            if (!is_online && check_online(box2[i], box1[j], box1[(j+1)%4]))
                 is_online = 1;
         }
-        // if all the cross production have the same sign, then the test point is within the box1
-        if (same_sign(cross_prod) || is_online == 1)
+        // if all the cross productions have the same sign, or if any point is on the line
+        if (same_sign(cross_prod) || is_online)
             inside_sum++;
+        
+        // Reset is_online for the next point
+        is_online = 0;
     }
     return inside_sum;
 }
+
 
 int compute_approximating_circle_radius(int ego_length, int ego_width) {
     double length = i2d(ego_length);
@@ -159,35 +195,78 @@ void calculateCornerPoints(ST_RECTANGLE veh_state, ST_DPOINT corners[]) {
     corners[3].y = d2i(i2d(veh_state.center.y) - halfLength*sin(angle) + halfWidth*cos(angle));
 }
 
+// int check_collision(ST_RECTANGLE veh_st_rect1, ST_RECTANGLE veh_st_rect2, int dis_thres) {
+//     int i, j;
+//     double dis, min_dis;
+//     // define two vehicles' circle tuple (front and rear)
+//     ST_DPOINT veh_circle_tuple1[2];
+//     ST_DPOINT veh_circle_tuple2[2];
+//     ST_DPOINT veh1_corners[4];
+//     ST_DPOINT veh2_corners[4];
+    
+//     // calculate the centers of the vehicles' circles
+//     compute_centers_of_approximation_circles(veh_st_rect1, veh_circle_tuple1);
+//     compute_centers_of_approximation_circles(veh_st_rect2, veh_circle_tuple2);
+
+//     min_dis = INFINITY;
+//     for (i = 0; i < 2; ++i) {
+//         for (j = 0; j < 2; ++j) {
+//             dis = sqrt(pow(veh_circle_tuple1[i].x - veh_circle_tuple2[j].x, 2) + pow(veh_circle_tuple1[i].y - veh_circle_tuple2[j].y, 2));
+//             min_dis = fmin(min_dis, dis);
+//         }
+//     }
+//     //int min_dis_int = d2i(min_dis);
+//     calculateCornerPoints(veh_st_rect1, veh1_corners);
+//     calculateCornerPoints(veh_st_rect2, veh2_corners);
+//     i = check_coverage(veh1_corners, veh2_corners);
+//     if (dis_thres > min_dis || i != 0)
+//         return 1; //collision happens
+//     else
+//         return 0;
+// }
+
 int check_collision(ST_RECTANGLE veh_st_rect1, ST_RECTANGLE veh_st_rect2, int dis_thres) {
-    int i, j;
-    double dis, min_dis;
-    // define two vehicles' circle tuple (front and rear)
+    // Define variables
+    int i;
+    double dis_sq, min_dis_sq;
     ST_DPOINT veh_circle_tuple1[2];
     ST_DPOINT veh_circle_tuple2[2];
     ST_DPOINT veh1_corners[4];
     ST_DPOINT veh2_corners[4];
-    
-    // calculate the centers of the vehicles' circles
+
+    // Calculate centers of approximation circles
     compute_centers_of_approximation_circles(veh_st_rect1, veh_circle_tuple1);
     compute_centers_of_approximation_circles(veh_st_rect2, veh_circle_tuple2);
 
-    min_dis = INFINITY;
-    for (i = 0; i < 2; ++i) {
-        for (j = 0; j < 2; ++j) {
-            dis = sqrt(pow(veh_circle_tuple1[i].x - veh_circle_tuple2[j].x, 2) + pow(veh_circle_tuple1[i].y - veh_circle_tuple2[j].y, 2));
-            min_dis = fmin(min_dis, dis);
+    // Initialize minimum squared distance
+    min_dis_sq = INFINITY;
+
+    // Calculate minimum squared distance
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 2; ++j) {
+            dis_sq = pow(veh_circle_tuple1[i].x - veh_circle_tuple2[j].x, 2) + pow(veh_circle_tuple1[i].y - veh_circle_tuple2[j].y, 2);
+            min_dis_sq = fmin(min_dis_sq, dis_sq);
         }
     }
-    //int min_dis_int = d2i(min_dis);
+
+    // Early termination if minimum distance satisfies threshold
+    if (min_dis_sq <= dis_thres * dis_thres) 
+        return 1;
+
+    // Calculate corner points
     calculateCornerPoints(veh_st_rect1, veh1_corners);
     calculateCornerPoints(veh_st_rect2, veh2_corners);
+
+    // Check coverage
     i = check_coverage(veh1_corners, veh2_corners);
-    if (dis_thres > min_dis || i != 0)
-        return 1; //collision happens
+    
+    // Collision detection based on distance threshold and coverage
+    if (dis_thres > sqrt(min_dis_sq) || i != 0)
+        return 1; // Collision detected
     else
-        return 0;
+        return 0; // No collision
 }
+
 
 int main() {
     const int DIS_THRES = 0;

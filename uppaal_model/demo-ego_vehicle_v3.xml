@@ -111,7 +111,7 @@ const ST_LANE laneNet[MAXL] = {lane1, lane2, lane3};
 const bool staticObsExists = true;
 const ST_RECTANGLE staticObs[MAXSO] = {{{-1550, -40}, 100, 450, 0}};
 
-const ST_PLANNING planning = {{-900, -40}};
+const ST_PLANNING planning = {{5054, -40}};
 //Kaige generated code ends
 
 typedef struct {
@@ -121,7 +121,7 @@ typedef struct {
 }ST_PAIR;
 
 const int P = 1;
-const uint8_t MAXTIME = 10;
+const uint8_t MAXTIME = 30;
 const uint8_t pLen0 = 5;
 const ST_PAIR policy0[pLen0] = {{0, 0.0, 0.0}, {2, 0.0, -0.4}, {4, 0.0, 0.4}, {6, 0.0, 0.0}, {MAXTIME, 0.0, 0.0}};
 broadcast chan chooseEgo, chooseObs, begin, update;
@@ -344,10 +344,11 @@ void compute_centers_of_approximation_circles(ST_RECTANGLE veh_rect, ST_DPOINT &
 }
 
 
+
+bool check_collision(ST_RECTANGLE veh_st_rect1, ST_RECTANGLE veh_st_rect2, int dis_thres) {    
     // define two vehicles' circle tuple (front and rear)
     ST_DPOINT veh_circle_tuple1[2] = {{0, 0}, {0, 0}};
     ST_DPOINT veh_circle_tuple2[2] = {{0, 0}, {0, 0}};
-bool check_collision(ST_RECTANGLE veh_st_rect1, ST_RECTANGLE veh_st_rect2, int dis_thres) {
     double min_dis = FLT_MAX, dis = 0;
     int i, j;    
     //int32_t temp[2][2];
@@ -599,6 +600,7 @@ bool canTurn(int dir) {
     outroad = !check_inlane_laneNet(nextShape, lane, veh_corners, box_corners);
 
     if(nextOrientation &gt;= rules.minOrientation &amp;&amp; nextOrientation &lt;= rules.maxOrientation &amp;&amp; !outroad) 
+    //if(nextOrientation &gt;= rules.minOrientation &amp;&amp; nextOrientation &lt;= rules.maxOrientation)
         return true;
     return false;
 }
@@ -639,11 +641,6 @@ void test_lane_single(const ST_LANE lane, ST_RECTANGLE veh_state, ST_DPOINT &amp
     }
 }
 
-    int lane = 0;
-    ST_DPOINT veh_corners[4];
-    ST_DPOINT box_corners[4];
-    bool outside[MAXL] = {false, false, false};
-    uint8_t inlane_pts_num = 0;
 void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     // real numbers of the current state
     double rVelocity = 0.0, vx = 0.0, vy = 0.0;
@@ -651,6 +648,11 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     // int/real numbers of velocity on X and Y axes
     int dVx = 0, dVy = 0;
     uint8_t i = 0;
+    int lane = 0;
+    ST_DPOINT veh_corners[4];
+    ST_DPOINT box_corners[4];
+    bool outside[MAXL] = {false, false, false};
+    uint8_t inlane_pts_num = 0;
 
     // update discrete velocity and orientation
     dState.velocity = dState.velocity + dState.acceleration * P;
@@ -960,7 +962,7 @@ obs1 = MovingObs(1, initCS1, shapeObs1);
 
 const ST_CSTATE initEgo = {{-39.0, -0.4}, 3.0, 0.0, 0.0, 0.0};
 const ST_RECTANGLE shapeEgo = {{-3900, -40}, 100, 450, 0};
-const ST_RULES rules = {400, 0, 157, -157}; 
+const ST_RULES rules = {400, 0, 20, -20}; 
 egoController = Controller(1, initEgo, shapeEgo, rules);
 egoDynamics = Dynamics(1, initEgo);
 
@@ -1030,7 +1032,7 @@ system Decisions, egoController, egoDynamics, obs1;
 		<query>
 			<formula>E[] !dStateEgo.detection.outside &amp;&amp; !dStateEgo.detection.collide</formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-07 13:35:51 +0200">
+			<result outcome="success" type="quality" timestamp="2024-05-07 14:38:36 +0200">
 				<option key="--total-runs" value="50"/>
 				<option key="--max-iterations" value="3"/>
 				<option key="--good-runs" value="20"/>
@@ -1052,11 +1054,8 @@ system Decisions, egoController, egoDynamics, obs1;
 			</result>
 		</query>
 		<query>
-			<formula>E&lt;&gt; dStateEgo.detection.reach</formula>
+			<formula>E&lt;&gt; dStateEgo.detection.reach &amp;&amp; !dStateEgo.detection.outside &amp;&amp; !dStateEgo.detection.collide</formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-07 13:23:13 +0200">
-				<option key="--diagnostic" value="0"/>
-			</result>
 		</query>
 		<query>
 			<formula/>

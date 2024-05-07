@@ -264,7 +264,7 @@ int main() {
 
     const ST_LANE laneNet[MAXL] = {lane1, lane2, lane3};
 
-    const ST_RECTANGLE ego = {{-2470, -448}, 100, 450, -40};
+    const ST_RECTANGLE ego = {{-2483, 395}, 100, 450, 50};
 
     int lane;
     ST_DPOINT veh_corners[4], box_corners[4];

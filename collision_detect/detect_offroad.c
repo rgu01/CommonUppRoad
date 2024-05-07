@@ -5,7 +5,7 @@
 
 #define MAXP 40
 #define NONE -1
-#define MAXL 11
+#define MAXL 3
 #define MAXSO 1
 #define MAXPRE 1
 #define MAXSUC 1
@@ -128,21 +128,23 @@ bool same_sign(int vec[]) {
 }
 
 // check if pt1 is on the same line defined by pt2-pt3
-int check_online(ST_DPOINT pt1, ST_DPOINT pt2, ST_DPOINT pt3) {
-    int dis12 = sqrt(pow(pt1.x - pt2.x, 2) + pow(pt1.y - pt2.y, 2));
-    int dis13 = sqrt(pow(pt1.x - pt3.x, 2) + pow(pt1.y - pt3.y, 2));
-    int dis23 = sqrt(pow(pt2.x - pt3.x, 2) + pow(pt2.y - pt3.y, 2));
+bool check_online(ST_DPOINT pt1, ST_DPOINT pt2, ST_DPOINT pt3) {
+    double dis12, dis13, dis23;
+
+    dis12 = sqrt(pow(pt1.x - pt2.x, 2) + pow(pt1.y - pt2.y, 2));
+    dis13 = sqrt(pow(pt1.x - pt3.x, 2) + pow(pt1.y - pt3.y, 2));
+    dis23 = sqrt(pow(pt2.x - pt3.x, 2) + pow(pt2.y - pt3.y, 2));
     if (dis12 + dis13 == dis23)
-        return 1;
+        return true;
     else
-        return 0; 
+        return false; 
 }
 
 // Check if any corner of box2 is outside box1
-int check_coverage(ST_DPOINT box1[], ST_DPOINT box2[]) {
+int check_coverage(ST_DPOINT box1[4], ST_DPOINT box2[4]) {
     int i = 0, j = 0;
-    int abx = 0, aby = 0, apx = 0, apy = 0;
-    int cross_prod[4];
+    int32_t abx = 0, aby = 0, apx = 0, apy = 0;
+    int32_t cross_prod[4];
     int inside_sum = 0;
     int is_online = 0;
     // Check if all corners of box2 fall outside the bounding box of box1   
@@ -160,7 +162,7 @@ int check_coverage(ST_DPOINT box1[], ST_DPOINT box2[]) {
                 is_online = 1;
         }
         // if all the cross production have the same sign, then the test point is within the box1
-        if (same_sign(cross_prod) && is_online == 0)
+        if (same_sign(cross_prod) || is_online == 1)
             inside_sum++;
     }
     return inside_sum;
@@ -262,7 +264,7 @@ int main() {
 
     const ST_LANE laneNet[MAXL] = {lane1, lane2, lane3};
 
-    const ST_RECTANGLE ego = {{-2102, -11}, 100, 450, 0};
+    const ST_RECTANGLE ego = {{-2470, -448}, 100, 450, -40};
 
     int lane;
     ST_DPOINT veh_corners[4], box_corners[4];

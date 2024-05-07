@@ -109,9 +109,9 @@ const ST_LANE lane3 = {30626, leftLane3, rightLane3, {NONE}, {NONE}, NONE, false
 const ST_LANE laneNet[MAXL] = {lane1, lane2, lane3};
 
 const bool staticObsExists = true;
-const ST_RECTANGLE staticObs[MAXSO] = {{{-3575, -40}, 100, 450, 0}};
+const ST_RECTANGLE staticObs[MAXSO] = {{{-1550, -40}, 100, 450, 0}};
 
-const ST_PLANNING planning = {{17406, -181}};
+const ST_PLANNING planning = {{-900, -40}};
 //Kaige generated code ends
 
 typedef struct {
@@ -141,20 +141,20 @@ int32_t d2i(const double i) {
     return v;
 }
 
-double getDisP2P(const ST_DPOINT &amp;p1, const ST_DPOINT &amp;p2) {
+int getDisP2P(const ST_DPOINT &amp;p1, const ST_DPOINT &amp;p2) {
     double distance = 0.0;
     double rx1 = i2d(p1.x), ry1 = i2d(p1.y);
     double rx2 = i2d(p2.x), ry2 = i2d(p2.y);
     distance = sqrt(pow(rx1 - rx2, 2) + pow(ry1 - ry2, 2));
 
-    return distance;
+    return d2i(distance);
 }
 
-double getDisP2L(const ST_DPOINT &amp;p, const ST_DLINE &amp;l) {
+int getDisP2L(const ST_DPOINT &amp;p, const ST_DLINE &amp;l) {
     // do nothing for now
     double distance = 0.0;
 
-    return distance;
+    return d2i(distance);
 }
 
 // Function to calculate the corner points of a rectangle
@@ -189,12 +189,26 @@ bool same_sign(int32_t vec[4]) {
     return true; // All elements have the same sign
 }
 
+// check if pt1 is on the same line defined by pt2-pt3
+bool check_online(ST_DPOINT pt1, ST_DPOINT pt2, ST_DPOINT pt3) {
+    double dis12, dis13, dis23;
+
+    dis12 = sqrt(pow(pt1.x - pt2.x, 2) + pow(pt1.y - pt2.y, 2));
+    dis13 = sqrt(pow(pt1.x - pt3.x, 2) + pow(pt1.y - pt3.y, 2));
+    dis23 = sqrt(pow(pt2.x - pt3.x, 2) + pow(pt2.y - pt3.y, 2));
+    if (dis12 + dis13 == dis23)
+        return true;
+    else
+        return false; 
+}
+
 // Check if any corner of box2 is outside box1
 int check_coverage(ST_DPOINT box1[4], ST_DPOINT box2[4]) {
-    uint8_t i = 0, j = 0;
+    int i = 0, j = 0;
     int32_t abx = 0, aby = 0, apx = 0, apy = 0;
     int32_t cross_prod[4];
-    uint8_t inside_sum = 0;
+    int inside_sum = 0;
+    int is_online = 0;
     // Check if all corners of box2 fall outside the bounding box of box1   
     for (i = 0; i &lt; 4; i++) {
         // get the x y coordinate of the test points
@@ -205,18 +219,15 @@ int check_coverage(ST_DPOINT box1[4], ST_DPOINT box2[4]) {
             apy = box2[i].y - box1[j].y;
             // cross product of ab and ap
             cross_prod[j] = abx*apy - apx*aby;
+            // check if on the line
+            if (check_online(box2[i], box1[j], box1[(j+1)%4]) == 1)
+                is_online = 1;
         }
         // if all the cross production have the same sign, then the test point is within the box1
-        if (same_sign(cross_prod))
+        if (same_sign(cross_prod) || is_online == 1)
             inside_sum++;
     }
-    // check the sum of the identifier
-    if (inside_sum == 4)
-        return 2; // the box2 is fully inside the box1
-    else if (inside_sum == 0)
-        return 0; // the box2 is fully outside the box1
-    else
-        return 1; // the box2 is partially outside the box1, which means cross the lane
+    return inside_sum;
 }
 
 // Function to count non-zero elements in a 2D array
@@ -231,11 +242,11 @@ int check_pts_num(ST_DPOINT lane_pts[MAXP]) {
 
 // check if veh_state are not covered by laneNet, or if vehicle rectangle touches laneNet
 // can this function call check_inlane_lane_single?
-int check_inlane_laneNet(ST_RECTANGLE veh_state, int &amp;lane, ST_DPOINT &amp;veh_corners[4], ST_DPOINT &amp;box_corners[4]) {
+bool check_inlane_laneNet(ST_RECTANGLE veh_state, int &amp;lane, ST_DPOINT &amp;veh_corners[4], ST_DPOINT &amp;box_corners[4]) {
     uint8_t i_lane = 0;
     uint8_t num_box = 0;
     uint8_t i_box = 0;
-    uint8_t if_inlane = 0;
+    uint8_t inlane_pts_num = 0;
     //ST_DPOINT veh_corners[4];
     //ST_DPOINT box_corners[4];
 
@@ -251,29 +262,22 @@ int check_inlane_laneNet(ST_RECTANGLE veh_state, int &amp;lane, ST_DPOINT &amp;v
             box_corners[2] = laneNet[i_lane].left.points[i_box + 1];
             box_corners[3] = laneNet[i_lane].left.points[i_box];
             // check if the inlane status of the vehicle box to the current box
-            if_inlane = check_coverage(box_corners, veh_corners);
-            if (if_inlane == 1) {
-                // this means the vehicle cross the laned
-                lane = laneNet[i_lane].ID;
-                return false;
-            }
-            else if (if_inlane == 2) {
-                // this means the vehicle is within the lane
-                lane = -1;
-                return true;      
-            }      
+            inlane_pts_num += check_coverage(box_corners, veh_corners);    
         }
     }
-    // fully outside the lane network 
-    lane = MAXL + 1;
-    return false;
+    if(inlane_pts_num &lt; 4) {
+        return false;
+    }
+    else {
+        return true;
+    }
 }
 
 // check if veh_state are not covered by a single lane, or if vehicle rectangle touches the edge of the lane
-int check_inlane_lane_single(const ST_LANE lane, ST_RECTANGLE veh_state, ST_DPOINT &amp;veh_corners[4], ST_DPOINT &amp;box_corners[4]) {
+bool check_inlane_lane_single(const ST_LANE lane, ST_RECTANGLE veh_state, ST_DPOINT &amp;veh_corners[4], ST_DPOINT &amp;box_corners[4]) {
     uint8_t num_box = 0;
     uint8_t i_box = 0;
-    uint8_t if_inlane = 0;
+    uint8_t inlane_pts_num = 0;
 
     //ST_DPOINT veh_corners[4];
     //ST_DPOINT box_corners[4];
@@ -289,41 +293,43 @@ int check_inlane_lane_single(const ST_LANE lane, ST_RECTANGLE veh_state, ST_DPOI
         box_corners[2] = lane.left.points[i_box + 1];
         box_corners[3] = lane.left.points[i_box];
         // check if the inlane status of the vehicle box to the current box
-        if_inlane = check_coverage(box_corners, veh_corners);
-        if (if_inlane == 1)
-            // this means the vehicle cross the lane
-            return false;
-        else if (if_inlane == 2)
-            // this means the vehicle is within the lane
-            return true;            
+        inlane_pts_num += check_coverage(box_corners, veh_corners);         
     }
-    // fully outside the lane network 
-    return false;
+    
+    if(inlane_pts_num &lt; 4) {
+        return false;
+    }
+    else {
+        return true;
+    }
 }
 
-double compute_approximating_circle_radius(double ego_length, double ego_width) {
+int32_t compute_approximating_circle_radius(int ego_length, int ego_width) {
+    double length = i2d(ego_length);
+    double width = i2d(ego_width);
     double square_length, diagonal_square, approx_radius;
 
-    if (ego_length &lt;= 0 || ego_width &lt;= 0) {
-        return -1.0;
+    if (length &lt;= 0 || width &lt;= 0) {
+        return -1;
     }
 
-    if (fabs(ego_length) &lt; 1e-6 &amp;&amp; fabs(ego_width) &lt; 1e-6)
-        return 0.0;
+    if (fabs(length) &lt; 1e-6 &amp;&amp; fabs(width) &lt; 1e-6) {
+        return 0;
+    }
     // Divide rectangle into 3 smaller rectangles
-    square_length = ego_length/3.0;
+    square_length = length/3.0;
     // Calculate minimum radius
-    diagonal_square = sqrt(pow(square_length/2.0, 2) + pow(ego_width/2.0, 2));
+    diagonal_square = sqrt(pow(square_length/2.0, 2) + pow(width/2.0, 2));
     // Round up value
     approx_radius = round(diagonal_square*10.0) / 10.0 + 0.1;
 
-    return approx_radius;
+    return d2i(approx_radius);
 }
 
 void compute_centers_of_approximation_circles(ST_RECTANGLE veh_rect, ST_DPOINT &amp;centers[2]) {
     double disc_radius, distance_centers, veh_cent_x_double, veh_cent_y_double;
 
-    disc_radius = compute_approximating_circle_radius(i2d(veh_rect.length), i2d(veh_rect.width));
+    disc_radius = i2d(compute_approximating_circle_radius(veh_rect.length, veh_rect.width));
     distance_centers = disc_radius/2.0;
 
     // Compute the center position of first circle (front)
@@ -341,7 +347,6 @@ void compute_centers_of_approximation_circles(ST_RECTANGLE veh_rect, ST_DPOINT &
     // define two vehicles' circle tuple (front and rear)
     ST_DPOINT veh_circle_tuple1[2] = {{0, 0}, {0, 0}};
     ST_DPOINT veh_circle_tuple2[2] = {{0, 0}, {0, 0}};
-    int32_t min_dis_int = 0;
 bool check_collision(ST_RECTANGLE veh_st_rect1, ST_RECTANGLE veh_st_rect2, int dis_thres) {
     double min_dis = FLT_MAX, dis = 0;
     int i, j;    
@@ -358,8 +363,7 @@ bool check_collision(ST_RECTANGLE veh_st_rect1, ST_RECTANGLE veh_st_rect2, int d
             min_dis = fmin(min_dis, dis);
         }
     }
-    min_dis_int = d2i(min_dis); //it seems we need to see the direction of the distance
-    if (dis_thres &gt; min_dis_int)
+    if (dis_thres &gt; min_dis)
         return true;
     else
         return false;
@@ -612,10 +616,34 @@ void initDis(ST_DSTATE &amp;dState, const ST_CSTATE &amp;initCS) {
     dState.detection.reach = false;
 }
 
+void test_lane_single(const ST_LANE lane, ST_RECTANGLE veh_state, ST_DPOINT &amp;veh_corners[4], ST_DPOINT &amp;box_corners[4], uint8_t &amp;inlane_pts_num) {
+    uint8_t num_box = 0;
+    uint8_t i_box = 0;
+    inlane_pts_num = 0;
+
+    //ST_DPOINT veh_corners[4];
+    //ST_DPOINT box_corners[4];
+    // Calculate the corner points
+    calculateCornerPoints(veh_state, veh_corners);
+
+    // check the number of points in the lane
+    num_box = check_pts_num(lane.left.points) - 1;
+    for (i_box = 0; i_box &lt; num_box; i_box++){
+        // define the corner of the road box
+        box_corners[0] = lane.right.points[i_box];
+        box_corners[1] = lane.right.points[i_box + 1];
+        box_corners[2] = lane.left.points[i_box + 1];
+        box_corners[3] = lane.left.points[i_box];
+        // check if the inlane status of the vehicle box to the current box
+        inlane_pts_num += check_coverage(box_corners, veh_corners);         
+    }
+}
+
     int lane = 0;
     ST_DPOINT veh_corners[4];
     ST_DPOINT box_corners[4];
     bool outside[MAXL] = {false, false, false};
+    uint8_t inlane_pts_num = 0;
 void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     // real numbers of the current state
     double rVelocity = 0.0, vx = 0.0, vy = 0.0;
@@ -645,9 +673,11 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     shape.orientation = dState.orientation;
     //calculateCornerPoints(shape, veh_corners);
     dState.detection.outside = !check_inlane_laneNet(shape, lane, veh_corners, box_corners);
-    for(i = 0; i &lt; MAXL; i++) {
-        outside[i] = !check_inlane_lane_single(laneNet[i], shape, veh_corners, box_corners);
-    }
+    //test_lane_single(laneNet[0], shape, veh_corners, box_corners, inlane_pts_num);
+    //dState.detection.outside = !check_inlane_lane_single(laneNet[1], shape, veh_corners, box_corners, inlane_pts_num);
+    /*for(i = 0; i &lt; MAXL; i++) {
+        outside[i] = !check_inlane_lane_single(laneNet[i], shape, veh_corners, box_corners, inlane_pts_num);
+    }*/
     //dState.detection.outside = !check_inlane_lane_single(lane4, shape, veh_corners, box_corners);
     dState.detection.reach = (getDisP2P(shape.center, planning.goal) &lt;= THRESHOLD);
     if(staticObsExists) {
@@ -935,10 +965,15 @@ egoController = Controller(1, initEgo, shapeEgo, rules);
 egoDynamics = Dynamics(1, initEgo);
 
 // List one or more processes to be composed into a system.
-system Decisions, egoController, egoDynamics;
+system Decisions, egoController, egoDynamics, obs1;
 //system Decisions, obs1;
 </system>
 	<queries>
+		<option key="--total-runs" value="50"/>
+		<option key="--max-iterations" value="3"/>
+		<option key="--good-runs" value="20"/>
+		<option key="--eval-runs" value="10"/>
+		<option key="--runs-pr-state" value="10"/>
 		<option key="--diagnostic" value="0"/>
 		<query>
 			<formula>simulate [&lt;=30] { obs1.vars.x, obs1.vars.y }</formula>
@@ -991,14 +1026,35 @@ system Decisions, egoController, egoDynamics;
 		<query>
 			<formula>A[] !dStateEgo.detection.outside</formula>
 			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-05-05 22:52:31 +0200">
+		</query>
+		<query>
+			<formula>E[] !dStateEgo.detection.outside &amp;&amp; !dStateEgo.detection.collide</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-07 13:35:51 +0200">
+				<option key="--total-runs" value="50"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--good-runs" value="20"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--runs-pr-state" value="10"/>
 				<option key="--diagnostic" value="0"/>
 			</result>
 		</query>
 		<query>
-			<formula>E[] !dStateEgo.detection.outside</formula>
+			<formula>E&lt;&gt; dStateEgo.detection.collide</formula>
 			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-05-05 22:24:24 +0200">
+			<result outcome="success" type="quality" timestamp="2024-05-07 13:35:34 +0200">
+				<option key="--total-runs" value="50"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--good-runs" value="20"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+			</result>
+		</query>
+		<query>
+			<formula>E&lt;&gt; dStateEgo.detection.reach</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-07 13:23:13 +0200">
 				<option key="--diagnostic" value="0"/>
 			</result>
 		</query>
@@ -1009,16 +1065,13 @@ system Decisions, egoController, egoDynamics;
 		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside</formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-05 21:32:35 +0200">
+			<result outcome="success" type="quality" timestamp="2024-05-07 13:24:20 +0200">
 				<option key="--diagnostic" value="0"/>
 			</result>
 		</query>
 		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.outside</formula>
 			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-05-05 22:24:28 +0200">
-				<option key="--diagnostic" value="0"/>
-			</result>
 		</query>
 		<query>
 			<formula>saveStrategy("/Users/rgu01/Library/CloudStorage/OneDrive-Mälardalensuniversitet/Documents/Postdoc/Conferences/2024/ISoLA/models/safe.out", safe)</formula>
@@ -1061,9 +1114,9 @@ system Decisions, egoController, egoDynamics;
 			<comment/>
 		</query>
 		<query>
-			<formula>strategy reachSafe = minE(D) [&lt;=MAXTIME] {egoController.location, dStateEgo.position.x, dStateEgo.position.y,
+			<formula>strategy reachSafe = minE(D) [&lt;=MAXTIME] {egoController.location}-&gt;{dStateEgo.position.x, dStateEgo.position.y,
 					  dStateEgo.velocity, dStateEgo.orientation, dStateEgo.acceleration,
-					  dStateEgo.yawRate}-&gt;{}: &lt;&gt; time&gt;=MAXTIME under safe</formula>
+					  dStateEgo.yawRate}: &lt;&gt; time&gt;=MAXTIME under safe</formula>
 			<comment/>
 		</query>
 		<query>

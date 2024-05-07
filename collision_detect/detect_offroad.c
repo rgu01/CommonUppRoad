@@ -140,30 +140,37 @@ bool check_online(ST_DPOINT pt1, ST_DPOINT pt2, ST_DPOINT pt3) {
         return false; 
 }
 
-// Check if any corner of box2 is outside box1
 int check_coverage(ST_DPOINT box1[4], ST_DPOINT box2[4]) {
-    int i = 0, j = 0;
-    int32_t abx = 0, aby = 0, apx = 0, apy = 0;
+    int i, j;
+    int32_t abx[4], aby[4], apx, apy;
     int32_t cross_prod[4];
     int inside_sum = 0;
     int is_online = 0;
-    // Check if all corners of box2 fall outside the bounding box of box1   
+    
+    // Pre-calculate abx and aby
+    for (j = 0; j < 4; j++) {
+        abx[j] = box1[(j+1)%4].x - box1[j].x;
+        aby[j] = box1[(j+1)%4].y - box1[j].y;
+    }
+
     for (i = 0; i < 4; i++) {
         // get the x y coordinate of the test points
+        apx = box2[i].x - box1[0].x;
+        apy = box2[i].y - box1[0].y;
+
         for (j = 0; j < 4; j++) {
-            abx = box1[(j+1)%4].x - box1[j].x; // when j+1=4, back to the first one
-            aby = box1[(j+1)%4].y - box1[j].y;
-            apx = box2[i].x - box1[j].x;
-            apy = box2[i].y - box1[j].y;
             // cross product of ab and ap
-            cross_prod[j] = abx*apy - apx*aby;
+            cross_prod[j] = abx[j]*apy - apx*aby[j];
             // check if on the line
-            if (check_online(box2[i], box1[j], box1[(j+1)%4]) == 1)
+            if (!is_online && check_online(box2[i], box1[j], box1[(j+1)%4]))
                 is_online = 1;
         }
-        // if all the cross production have the same sign, then the test point is within the box1
-        if (same_sign(cross_prod) || is_online == 1)
+        // if all the cross productions have the same sign, or if any point is on the line
+        if (same_sign(cross_prod) || is_online)
             inside_sum++;
+        
+        // Reset is_online for the next point
+        is_online = 0;
     }
     return inside_sum;
 }
@@ -219,35 +226,37 @@ int check_inlane_lane_single(const ST_LANE lane, ST_RECTANGLE veh_state, ST_DPOI
 // check if veh_state are not covered by laneNet, or if vehicle rectangle touches laneNet
 // can this function call check_inlane_lane_single?
 int check_inlane_laneNet(ST_LANE laneNet[], ST_RECTANGLE veh_state, int *lane, ST_DPOINT veh_corners[], ST_DPOINT box_corners[]) {
-    int i_lane = 0;
-    int num_box = 0;
-    int i_box = 0;
+    int i_lane, i_box;
+    int num_box;
     int inlane_pts_num = 0;
-    //ST_DPOINT veh_corners[4];
-    //ST_DPOINT box_corners[4];
 
-    // Calculate the corner points
+    // Calculate the corner points of the vehicle state
     calculateCornerPoints(veh_state, veh_corners);
-    for(i_lane = 0; i_lane < MAXL; i_lane++){
-        // check the number of points in each lane
+
+    for (i_lane = 0; i_lane < MAXL; i_lane++) {
+        // Check the number of points in each lane
         num_box = check_pts_num(laneNet[i_lane].left.points) - 1;
-        for (i_box = 0; i_box < num_box; i_box++){
-            // define the corner of the road box
+        for (i_box = 0; i_box < num_box; i_box++) {
+            // Define the corner points of the road box
             box_corners[0] = laneNet[i_lane].right.points[i_box];
             box_corners[1] = laneNet[i_lane].right.points[i_box + 1];
             box_corners[2] = laneNet[i_lane].left.points[i_box + 1];
             box_corners[3] = laneNet[i_lane].left.points[i_box];
-            // check if the inlane status of the vehicle box to the current box
-            inlane_pts_num += check_coverage(box_corners, veh_corners);     
+
+            // Check if the vehicle is in the current lane
+            inlane_pts_num += check_coverage(box_corners, veh_corners);
+
+            // Early termination if all corners of the vehicle are within a single lane
+            if (inlane_pts_num >= 4) {
+                return true;
+            }
         }
     }
-    if(inlane_pts_num < 4) {
-        return false;
-    }
-    else {
-        return true;
-    }
+
+    // Return false if the vehicle is not completely within any lane
+    return false;
 }
+
 
 int main() {
     const ST_BOUND leftLane1 = {{{-3928, -215}, {-2081, -196}, {-2070, -196}, {-3, -174}, {7, -174}, {2138, -152}, {2149, -152}, {2672, -147}, {2674, -147}, {3202, -141}, {3218, -141}, {3734, -136}, {3754, -136}, {4291, -130}, {4303, -130}, {7189, -100}, {7201, -100}, {9511, -76}, {9522, -76}, {12009, -50}, {12020, -50}, {15467, -15}, {15478, -15}, {18208, 13}, {18219, 13}, {20736, 39}, {20747, 39}, {22816, 60}, {22828, 60}, {25679, 90}, {25691, 90}, {28619, 120}, {28630, 120}, {31057, 145}, {31068, 145}, {33414, 170}, {33426, 170}, {36391, 200}, {36402, 200}, {38727, 224}}, false};

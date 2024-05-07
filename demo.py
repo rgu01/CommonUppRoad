@@ -53,7 +53,8 @@ def make_dynamic_obstacle(obstacle_id, data, w=1.8, l=4.3):
 
 
 #file_path = './scenarios/ZAM_Tutorial-1_2_T-1.xml'
-file_path = './CommonUppRoad/scenarios/DEU_A9-2_1_T-1.xml'
+#file_path = './CommonUppRoad/scenarios/DEU_A9-2_1_T-1.xml'
+file_path = './CommonUppRoad/parse_xml/data_xml/DEU_Ffb-1_3_T-1.xml'
 scenario, planning_problem_set = CommonRoadFileReader(file_path).open()
 
 # remove existing obstacles

@@ -8,6 +8,7 @@
         "vcruntime.h": "c",
         "xiosbase": "c",
         "xlocale": "c",
-        "xstring": "c"
+        "xstring": "c",
+        "cmath": "c"
     }
 }

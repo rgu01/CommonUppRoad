@@ -64,12 +64,24 @@ bool same_sign(int vec[]) {
     return true; // All elements have the same sign
 }
 
+// check if pt1 is on the same line defined by pt2-pt3
+int check_online(ST_DPOINT pt1, ST_DPOINT pt2, ST_DPOINT pt3) {
+    int dis12 = sqrt(pow(pt1.x - pt2.x, 2) + pow(pt1.y - pt2.y, 2));
+    int dis13 = sqrt(pow(pt1.x - pt3.x, 2) + pow(pt1.y - pt3.y, 2));
+    int dis23 = sqrt(pow(pt2.x - pt3.x, 2) + pow(pt2.y - pt3.y, 2));
+    if (dis12 + dis13 == dis23)
+        return 1;
+    else
+        return 0; 
+}
+
 // Check if any corner of box2 is outside box1
-bool check_coverage(ST_DPOINT box1[], ST_DPOINT box2[]) {
+int check_coverage(ST_DPOINT box1[], ST_DPOINT box2[]) {
     int i = 0, j = 0;
     int abx = 0, aby = 0, apx = 0, apy = 0;
     int cross_prod[4];
     int inside_sum = 0;
+    int is_online = 0;
     // Check if all corners of box2 fall outside the bounding box of box1   
     for (i = 0; i < 4; i++) {
         // get the x y coordinate of the test points
@@ -80,12 +92,15 @@ bool check_coverage(ST_DPOINT box1[], ST_DPOINT box2[]) {
             apy = box2[i].y - box1[j].y;
             // cross product of ab and ap
             cross_prod[j] = abx*apy - apx*aby;
+            // check if on the line
+            if (check_online(box2[i], box1[j], box1[(j+1)%4]) == 1)
+                is_online = 1;
         }
         // if all the cross production have the same sign, then the test point is within the box1
-        if (same_sign(cross_prod))
-            return true;
+        if (same_sign(cross_prod) || is_online == 1)
+            inside_sum++;
     }
-    return false;
+    return inside_sum;
 }
 
 int compute_approximating_circle_radius(int ego_length, int ego_width) {

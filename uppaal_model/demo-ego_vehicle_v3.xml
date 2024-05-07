@@ -2,13 +2,14 @@
 <!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
 <nta>
 	<declaration>// Kaige geneted code starts
-const int MAXP = 2;
+const int MAXP = 40;
 const int NONE = -1;
 const int MAXL = 3;
 const int MAXSO = 1;
 const int MAXPRE = 1;
 const int MAXSUC = 1;
 const double SCALE = 100.0; // scale from int to double: 100 = 1.0
+const int THRESHOLD = 200;
 
 typedef int[-1,65535] id_t;
 
@@ -93,24 +94,24 @@ typedef struct {
     ST_DPOINT goal;
 }ST_PLANNING;
 
-const ST_BOUND leftLane1 = {{{0, 175}, {19900, 175}}, false};
-const ST_BOUND rightLane1 = {{{0, -175}, {19900, -175}}, false};
-const ST_LANE lane1 = {1, leftLane1, rightLane1, {NONE}, {NONE}, 2, false, NONE, false};
+const ST_BOUND leftLane1 = {{{-3928, -215}, {-2081, -196}, {-2070, -196}, {-3, -174}, {7, -174}, {2138, -152}, {2149, -152}, {2672, -147}, {2674, -147}, {3202, -141}, {3218, -141}, {3734, -136}, {3754, -136}, {4291, -130}, {4303, -130}, {7189, -100}, {7201, -100}, {9511, -76}, {9522, -76}, {12009, -50}, {12020, -50}, {15467, -15}, {15478, -15}, {18208, 13}, {18219, 13}, {20736, 39}, {20747, 39}, {22816, 60}, {22828, 60}, {25679, 90}, {25691, 90}, {28619, 120}, {28630, 120}, {31057, 145}, {31068, 145}, {33414, 170}, {33426, 170}, {36391, 200}, {36402, 200}, {38727, 224}}, false};
+const ST_BOUND rightLane1 = {{{-3913, -588}, {-2077, -569}, {-2066, -569}, {0, -547}, {11, -547}, {2142, -525}, {2153, -525}, {2676, -520}, {2678, -520}, {3206, -514}, {3222, -514}, {3737, -509}, {3758, -508}, {4295, -503}, {4306, -503}, {7193, -473}, {7204, -473}, {9515, -449}, {9526, -449}, {12013, -423}, {12024, -423}, {15471, -388}, {15482, -388}, {18212, -359}, {18223, -359}, {20740, -333}, {20751, -333}, {22820, -312}, {22831, -312}, {25683, -282}, {25695, -282}, {28623, -252}, {28634, -252}, {31061, -227}, {31072, -227}, {33418, -202}, {33429, -202}, {36394, -172}, {36406, -171}, {38742, -147}}, false};
+const ST_LANE lane1 = {30622, leftLane1, rightLane1, {NONE}, {NONE}, 30624, true, NONE, false};
 
-const ST_BOUND leftLane2 = {{{0, 525}, {19900, 525}}, false};
-const ST_BOUND rightLane2 = {{{0, 175}, {19900, 175}}, false};
-const ST_LANE lane2 = {2, leftLane2, rightLane2, {NONE}, {NONE}, 3, true, 1, false};
+const ST_BOUND leftLane2 = {{{-3927, 134}, {-2085, 153}, {-2080, 153}, {-7, 174}, {-1, 174}, {2134, 196}, {2139, 196}, {2670, 202}, {2683, 202}, {3198, 207}, {3222, 208}, {3730, 213}, {3735, 213}, {4288, 219}, {4293, 219}, {7186, 248}, {7191, 248}, {9507, 272}, {9513, 272}, {12005, 298}, {12010, 298}, {15464, 334}, {15469, 334}, {18204, 362}, {18209, 362}, {20733, 388}, {20738, 388}, {22813, 410}, {22818, 410}, {25676, 439}, {25681, 439}, {28615, 470}, {28621, 470}, {31053, 495}, {31058, 495}, {33411, 519}, {33416, 519}, {36387, 550}, {36392, 550}, {38728, 574}}, false};
+const ST_BOUND rightLane2 = {{{-3928, -215}, {-2081, -196}, {-2076, -196}, {-3, -174}, {1, -174}, {2138, -152}, {2143, -152}, {2674, -147}, {2687, -147}, {3202, -141}, {3226, -141}, {3734, -136}, {3739, -136}, {4291, -130}, {4297, -130}, {7189, -100}, {7195, -100}, {9511, -76}, {9516, -76}, {12009, -50}, {12014, -50}, {15467, -15}, {15472, -15}, {18208, 13}, {18213, 13}, {20736, 39}, {20741, 39}, {22816, 60}, {22822, 60}, {25679, 90}, {25685, 90}, {28619, 120}, {28624, 120}, {31057, 145}, {31062, 145}, {33414, 170}, {33420, 170}, {36391, 200}, {36396, 200}, {38727, 224}}, false};
+const ST_LANE lane2 = {30624, leftLane2, rightLane2, {NONE}, {NONE}, 30626, true, 30622, true};
 
-const ST_BOUND leftLane3 = {{{0, 875}, {19900, 875}}, false};
-const ST_BOUND rightLane3 = {{{0, 525}, {19900, 525}}, false};
-const ST_LANE lane3 = {3, leftLane3, rightLane3, {NONE}, {NONE}, NONE, false, 2, true};
+const ST_BOUND leftLane3 = {{{-3949, 487}, {-2102, 506}, {-2083, 506}, {-23, 527}, {-5, 528}, {2117, 549}, {2136, 550}, {2648, 555}, {2679, 555}, {3182, 560}, {3219, 561}, {3700, 566}, {3731, 566}, {4271, 572}, {4289, 572}, {7169, 602}, {7187, 602}, {9491, 626}, {9509, 626}, {11988, 651}, {12007, 651}, {15447, 687}, {15465, 687}, {18187, 715}, {18206, 715}, {20716, 741}, {20734, 742}, {22796, 763}, {22814, 763}, {25659, 792}, {25677, 793}, {28599, 823}, {28617, 823}, {31036, 848}, {31055, 848}, {33394, 872}, {33412, 872}, {36370, 903}, {36389, 903}, {38706, 927}}, false};
+const ST_BOUND rightLane3 = {{{-3927, 134}, {-2098, 153}, {-2080, 153}, {-20, 174}, {-1, 174}, {2121, 196}, {2139, 196}, {2652, 202}, {2683, 202}, {3186, 207}, {3222, 208}, {3704, 212}, {3735, 213}, {4275, 218}, {4293, 219}, {7173, 248}, {7191, 248}, {9494, 272}, {9513, 272}, {11992, 298}, {12010, 298}, {15450, 334}, {15469, 334}, {18191, 362}, {18209, 362}, {20719, 388}, {20738, 388}, {22800, 410}, {22818, 410}, {25663, 439}, {25681, 439}, {28602, 469}, {28621, 470}, {31040, 495}, {31058, 495}, {33398, 519}, {33416, 519}, {36374, 550}, {36392, 550}, {38728, 574}}, false};
+const ST_LANE lane3 = {30626, leftLane3, rightLane3, {NONE}, {NONE}, NONE, false, 30624, true};
 
 const ST_LANE laneNet[MAXL] = {lane1, lane2, lane3};
 
 const bool staticObsExists = true;
-const ST_RECTANGLE staticObs[MAXSO] = {{{3000, 350}, 200, 450, 2}};
+const ST_RECTANGLE staticObs[MAXSO] = {{{-3575, -40}, 100, 450, 0}};
 
-const ST_PLANNING planning = {{9950, 0}};
+const ST_PLANNING planning = {{17406, -181}};
 //Kaige generated code ends
 
 typedef struct {
@@ -130,13 +131,13 @@ ST_VARIABLES vars;      // continuous variables
 hybrid clock D;         /// "cost" of distance used in strategy optimization
 clock time;             // global time
 
-double i2d(const int i) {
+double i2d(const int32_t i) {
     double v = i/SCALE;
     return v;
 }
 
-int d2i(const double i) {
-    int v = fint(i*SCALE);
+int32_t d2i(const double i) {
+    int32_t v = fint(i*SCALE);
     return v;
 }
 
@@ -154,16 +155,6 @@ double getDisP2L(const ST_DPOINT &amp;p, const ST_DLINE &amp;l) {
     double distance = 0.0;
 
     return distance;
-}
-
-const double THRESHOLD = 2.0;
-bool collision(const ST_RECTANGLE &amp;obj, ST_RECTANGLE staticObs) {
-    double distance;
-    distance = getDisP2P(obj.center, staticObs.center);
-    if(distance &lt;= THRESHOLD) {
-        return true;
-    }
-    return false;
 }
 
 // Function to calculate the corner points of a rectangle
@@ -310,7 +301,70 @@ int check_inlane_lane_single(const ST_LANE lane, ST_RECTANGLE veh_state, ST_DPOI
     return false;
 }
 
+double compute_approximating_circle_radius(double ego_length, double ego_width) {
+    double square_length, diagonal_square, approx_radius;
 
+    if (ego_length &lt;= 0 || ego_width &lt;= 0) {
+        return -1.0;
+    }
+
+    if (fabs(ego_length) &lt; 1e-6 &amp;&amp; fabs(ego_width) &lt; 1e-6)
+        return 0.0;
+    // Divide rectangle into 3 smaller rectangles
+    square_length = ego_length/3.0;
+    // Calculate minimum radius
+    diagonal_square = sqrt(pow(square_length/2.0, 2) + pow(ego_width/2.0, 2));
+    // Round up value
+    approx_radius = round(diagonal_square*10.0) / 10.0 + 0.1;
+
+    return approx_radius;
+}
+
+void compute_centers_of_approximation_circles(ST_RECTANGLE veh_rect, ST_DPOINT &amp;centers[2]) {
+    double disc_radius, distance_centers, veh_cent_x_double, veh_cent_y_double;
+
+    disc_radius = compute_approximating_circle_radius(i2d(veh_rect.length), i2d(veh_rect.width));
+    distance_centers = disc_radius/2.0;
+
+    // Compute the center position of first circle (front)
+    veh_cent_x_double = i2d(veh_rect.center.x);
+    veh_cent_y_double = i2d(veh_rect.center.y);
+    centers[0].x = d2i(veh_cent_x_double + (distance_centers/2.0)*cos(i2d(veh_rect.orientation)));
+    centers[0].y = d2i(veh_cent_y_double + (distance_centers/2.0)*sin(i2d(veh_rect.orientation)));
+
+    // Compute the center position of second circle (rear)
+    centers[1].x = d2i(veh_cent_x_double - (distance_centers/2.0)*cos(i2d(veh_rect.orientation)));
+    centers[1].y = d2i(veh_cent_y_double - (distance_centers/2.0)*sin(i2d(veh_rect.orientation)));
+}
+
+
+    // define two vehicles' circle tuple (front and rear)
+    ST_DPOINT veh_circle_tuple1[2] = {{0, 0}, {0, 0}};
+    ST_DPOINT veh_circle_tuple2[2] = {{0, 0}, {0, 0}};
+    int32_t min_dis_int = 0;
+bool check_collision(ST_RECTANGLE veh_st_rect1, ST_RECTANGLE veh_st_rect2, int dis_thres) {
+    double min_dis = FLT_MAX, dis = 0;
+    int i, j;    
+    //int32_t temp[2][2];
+    
+    // calculate the centers of the vehicles' circles
+    compute_centers_of_approximation_circles(veh_st_rect1, veh_circle_tuple1);
+    compute_centers_of_approximation_circles(veh_st_rect2, veh_circle_tuple2);
+
+    for (i = 0; i &lt; 2; ++i) {
+        for (j = 0; j &lt; 2; ++j) {
+            dis = sqrt(pow(veh_circle_tuple1[i].x - veh_circle_tuple2[j].x, 2) + pow(veh_circle_tuple1[i].y - veh_circle_tuple2[j].y, 2));
+            //temp[i][j] = d2i(dis);
+            min_dis = fmin(min_dis, dis);
+        }
+    }
+    min_dis_int = d2i(min_dis); //it seems we need to see the direction of the distance
+    if (dis_thres &gt; min_dis_int)
+        return true;
+    else
+        return false;
+}
+   
 </declaration>
 	<template>
 		<name x="5" y="5">MovingObs</name>
@@ -544,6 +598,7 @@ bool canTurn(int dir) {
         return true;
     return false;
 }
+
 void initDis(ST_DSTATE &amp;dState, const ST_CSTATE &amp;initCS) {
     dState.position.x = d2i(initCS.position.x);
     dState.position.y = d2i(initCS.position.y);
@@ -557,6 +612,10 @@ void initDis(ST_DSTATE &amp;dState, const ST_CSTATE &amp;initCS) {
     dState.detection.reach = false;
 }
 
+    int lane = 0;
+    ST_DPOINT veh_corners[4];
+    ST_DPOINT box_corners[4];
+    bool outside[MAXL] = {false, false, false};
 void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     // real numbers of the current state
     double rVelocity = 0.0, vx = 0.0, vy = 0.0;
@@ -564,9 +623,6 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     // int/real numbers of velocity on X and Y axes
     int dVx = 0, dVy = 0;
     uint8_t i = 0;
-    int lane = 0;
-    ST_DPOINT veh_corners[4];
-    ST_DPOINT box_corners[4];
 
     // update discrete velocity and orientation
     dState.velocity = dState.velocity + dState.acceleration * P;
@@ -589,11 +645,14 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     shape.orientation = dState.orientation;
     //calculateCornerPoints(shape, veh_corners);
     dState.detection.outside = !check_inlane_laneNet(shape, lane, veh_corners, box_corners);
+    for(i = 0; i &lt; MAXL; i++) {
+        outside[i] = !check_inlane_lane_single(laneNet[i], shape, veh_corners, box_corners);
+    }
     //dState.detection.outside = !check_inlane_lane_single(lane4, shape, veh_corners, box_corners);
     dState.detection.reach = (getDisP2P(shape.center, planning.goal) &lt;= THRESHOLD);
     if(staticObsExists) {
         for(i = 0; i &lt; MAXSO; i++) {
-            dState.detection.collide |= collision(shape, staticObs[i]);
+            dState.detection.collide |= check_collision(shape, staticObs[i], THRESHOLD);
         }
     }
 }
@@ -869,8 +928,8 @@ const ST_CSTATE initCS1 = {{2.25, 3.50}, 2.30, 0.0, 0.0, 0.0};
 const ST_RECTANGLE shapeObs1 = {{225, 350}, 200, 450, 0};
 obs1 = MovingObs(1, initCS1, shapeObs1);
 
-const ST_CSTATE initEgo = {{0, 7}, 3.0, 0.0, 0.0, 0.0};
-const ST_RECTANGLE shapeEgo = {{0, 700}, 100, 450, 0};
+const ST_CSTATE initEgo = {{-39.0, -0.4}, 3.0, 0.0, 0.0, 0.0};
+const ST_RECTANGLE shapeEgo = {{-3900, -40}, 100, 450, 0};
 const ST_RULES rules = {400, 0, 157, -157}; 
 egoController = Controller(1, initEgo, shapeEgo, rules);
 egoDynamics = Dynamics(1, initEgo);
@@ -932,14 +991,14 @@ system Decisions, egoController, egoDynamics;
 		<query>
 			<formula>A[] !dStateEgo.detection.outside</formula>
 			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-05-03 16:27:22 +0200">
+			<result outcome="failure" type="quality" timestamp="2024-05-05 22:52:31 +0200">
 				<option key="--diagnostic" value="0"/>
 			</result>
 		</query>
 		<query>
 			<formula>E[] !dStateEgo.detection.outside</formula>
 			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-05-04 16:13:32 +0200">
+			<result outcome="failure" type="quality" timestamp="2024-05-05 22:24:24 +0200">
 				<option key="--diagnostic" value="0"/>
 			</result>
 		</query>
@@ -957,7 +1016,7 @@ system Decisions, egoController, egoDynamics;
 		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.outside</formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-05 21:30:31 +0200">
+			<result outcome="failure" type="quality" timestamp="2024-05-05 22:24:28 +0200">
 				<option key="--diagnostic" value="0"/>
 			</result>
 		</query>

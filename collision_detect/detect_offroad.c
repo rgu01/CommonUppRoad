@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define MAXP 50
+#define MAXP 40
 #define NONE -1
 #define MAXL 11
 #define MAXSO 1
@@ -148,13 +148,14 @@ int check_coverage(ST_DPOINT box1[], ST_DPOINT box2[]) {
         if (same_sign(cross_prod))
             inside_sum++;
     }
+    return inside_sum;
     // check the sum of the identifier
-    if (inside_sum == 4)
-        return 2; // the box2 is fully inside the box1
-    else if (inside_sum == 0)
-        return 0; // the box2 is fully outside the box1
-    else
-        return 1; // the box2 is partially outside the box1, which means cross the lane
+    //if (inside_sum == 4)
+    //    return 2; // the box2 is fully inside the box1
+    //else if (inside_sum == 0)
+    //    return 0; // the box2 is fully outside the box1
+    //else
+    //    return 1; // the box2 is partially outside the box1, which means cross the lane
 }
 
 // Function to count non-zero elements in a 2D array
@@ -171,7 +172,7 @@ int check_pts_num(ST_DPOINT lane_pts[]) {
 int check_inlane_lane_single(const ST_LANE lane, ST_RECTANGLE veh_state, ST_DPOINT veh_corners[], ST_DPOINT box_corners[]) {
     int num_box = 0;
     int i_box = 0;
-    int if_inlane = 0;
+    int inlane_pts_num = 0;
 
     //ST_DPOINT veh_corners[4];
     //ST_DPOINT box_corners[4];
@@ -187,16 +188,22 @@ int check_inlane_lane_single(const ST_LANE lane, ST_RECTANGLE veh_state, ST_DPOI
         box_corners[2] = lane.left.points[i_box + 1];
         box_corners[3] = lane.left.points[i_box];
         // check if the inlane status of the vehicle box to the current box
-        if_inlane = check_coverage(box_corners, veh_corners);
-        if (if_inlane == 1)
+        inlane_pts_num += check_coverage(box_corners, veh_corners);
+        //if (if_inlane == 1)
             // this means the vehicle cross the lane
-            return false;
-        else if (if_inlane == 2)
+            //return false;
+        //else if (if_inlane == 2)
             // this means the vehicle is within the lane
-            return true;            
+            //return true;            
     }
     // fully outside the lane network 
-    return false;
+    //return false;
+    if(inlane_pts_num < 4) {
+        return false;
+    }
+    else {
+        return true;
+    }
 }
 
 // check if veh_state are not covered by laneNet, or if vehicle rectangle touches laneNet
@@ -205,7 +212,7 @@ int check_inlane_laneNet(ST_LANE laneNet[], ST_RECTANGLE veh_state, int *lane, S
     int i_lane = 0;
     int num_box = 0;
     int i_box = 0;
-    int if_inlane = 0;
+    int inlane_pts_num = 0;
     //ST_DPOINT veh_corners[4];
     //ST_DPOINT box_corners[4];
 
@@ -221,22 +228,28 @@ int check_inlane_laneNet(ST_LANE laneNet[], ST_RECTANGLE veh_state, int *lane, S
             box_corners[2] = laneNet[i_lane].left.points[i_box + 1];
             box_corners[3] = laneNet[i_lane].left.points[i_box];
             // check if the inlane status of the vehicle box to the current box
-            if_inlane = check_coverage(box_corners, veh_corners);
-            if (if_inlane == 1) {
+            inlane_pts_num += check_coverage(box_corners, veh_corners);
+            //if (if_inlane == 1) {
                 // this means the vehicle cross the lane
-                *lane = laneNet[i_lane].ID;
-                return false;
-            }
-            else if (if_inlane == 2) {
+                //*lane = laneNet[i_lane].ID;
+                //return false;
+            //}
+            //else if (if_inlane == 2) {
                 // this means the vehicle is within the lane
-                *lane = -1;
-                return true;      
-            }      
+                //*lane = -1;
+                //return true;      
+            //}      
         }
     }
+    if(inlane_pts_num < 4) {
+        return false;
+    }
+    else {
+        return true;
+    }
     // fully outside the lane network 
-    lane = MAXL + 1;
-    return false;
+    //lane = MAXL + 1;
+    //return false;
 }
 
 int main() {

@@ -1,1 +1,1 @@
-./bin/verifyta ./demo-ego_vehicle.xml query.q -F 1.0
+./bin/verifyta ./scenarios_xml/DEU_Ffb-1_3_T-1_generated_lanelet.xml query_v3.q -F 1.0 -D 0.01 -s --max-iterations 1 --eval-runs 1 --good-runs 100 --total-runs 200 --reset-no-better 1 --max-reset-learning 1

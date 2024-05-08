@@ -52,15 +52,17 @@ def make_dynamic_obstacle(obstacle_id, data, w=1.8, l=4.3):
     return obstacle
 
 
-file_path = './scenarios/ZAM_Tutorial-1_2_T-1.xml'
+#file_path = './scenarios/ZAM_Tutorial-1_2_T-1.xml'
+#file_path = './CommonUppRoad/scenarios/DEU_A9-2_1_T-1.xml'
+file_path = './CommonUppRoad/parse_xml/data_xml/DEU_Ffb-1_3_T-1.xml'
 scenario, planning_problem_set = CommonRoadFileReader(file_path).open()
 
 # remove existing obstacles
-for obst in scenario.obstacles:
-    scenario.remove_obstacle(obst)
+#for obst in scenario.obstacles:
+    #scenario.remove_obstacle(obst)
 
 # read sample log
-sample = read_sample_log('./uppaal_model/sampling.log')
+sample = read_sample_log('./CommonUppRoad/uppaal_model/sampling.log')
 
 # divide data into obstacle states and ego states
 obst_states, ego_states = [], []
@@ -73,7 +75,7 @@ for row in sample:
 obst = make_dynamic_obstacle(scenario.generate_object_id(), obst_states)
 ego = make_dynamic_obstacle(scenario.generate_object_id(), ego_states)
 
-scenario.add_objects(obst)
+#scenario.add_objects(obst)
 scenario.add_objects(ego)
 
 # render and store as gif

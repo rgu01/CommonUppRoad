@@ -379,7 +379,7 @@ typedef struct {
     ST_CSTATE cState;
 }ST_PAIR;
 
-const uint8_t tLen = 1;
+const uint8_t tLen = 3;
 const ST_PAIR trajectory[tLen] = {{0,{{-20.0,-0.4},3.5,0.0,0.0,0.0}},{1,{{-23.5,-0.4},3.5,0.0,0.0,0.0}},{MAXTIME,{{15.0,-0.4},3.5,0.0,0.0,0.0}}};
 
 void decisionMaking() {
@@ -958,6 +958,25 @@ system Decisions, egoController, egoDynamics, obs1;
 		<query>
 			<formula>simulate [&lt;=MAXTIME] { obs1.vars.x, obs1.vars.y }</formula>
 			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-10 10:26:47 +0200">
+				<option key="--total-runs" value="50"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--good-runs" value="20"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+				<plot title="Simulations (1)" xaxis="time" yaxis="value">
+					<series title="(obs1.vars).x" type="l" color="0xff0000" encoding="csv">0.0,0.0
+0.0,2.25
+10.000002,25.250004599999762
+					</series>
+					<series title="(obs1.vars).y" type="l" color="0x00ffff" encoding="csv">0.0,0.0
+0.0,3.5
+10.000002,3.5
+					</series>
+					<comment/>
+				</plot>
+			</result>
 		</query>
 		<query>
 			<formula>simulate [&lt;=MAXTIME] { obs1.vars.velocity, obs1.vars.orientation, obs1.vars.yawRate, obs1.vars.acceleration }</formula>

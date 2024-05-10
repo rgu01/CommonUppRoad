@@ -1,15 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
 <nta>
-	<declaration>// Kaige geneted code starts
-const int MAXP = 40;
-const int NONE = -1;
-const int MAXL = 3;
-const int MAXSO = 1;
-const int MAXPRE = 1;
-const int MAXSUC = 1;
+	<declaration>// Generated scenario starts
+const int P = 1;
+const uint8_t MAXTIME = 10; // max learning time: default value 10
+const int MAXP = 40; // max points in a lane
+const int NONE = -1; // default value of NONE
+const int MAXL = 3;  // max number of lanes
+const int MAXSO = 1; // max number of static obstacles
+const int MAXDO = 1; // max number of dynamic (moving) obstacles
+const int MAXTP = 5; // max points in trajectories of moving obstacles
+const int MAXPRE = 1; // max precessors of a lane
+const int MAXSUC = 1; // max successors of a lane
 const double SCALE = 100.0; // scale from int to double: 100 = 1.0
-const int THRESHOLD = 200;
+const int THRESHOLD = 200; //threshold of collision and offroad
 
 typedef int[-1,65535] id_t;
 
@@ -94,6 +98,11 @@ typedef struct {
     ST_DPOINT goal;
 }ST_PLANNING;
 
+typedef struct {
+    int32_t time;
+    ST_CSTATE cState;
+}ST_PAIR;
+
 const ST_BOUND leftLane1 = {{{-3928, -215}, {-2081, -196}, {-2070, -196}, {-3, -174}, {7, -174}, {2138, -152}, {2149, -152}, {2672, -147}, {2674, -147}, {3202, -141}, {3218, -141}, {3734, -136}, {3754, -136}, {4291, -130}, {4303, -130}, {7189, -100}, {7201, -100}, {9511, -76}, {9522, -76}, {12009, -50}, {12020, -50}, {15467, -15}, {15478, -15}, {18208, 13}, {18219, 13}, {20736, 39}, {20747, 39}, {22816, 60}, {22828, 60}, {25679, 90}, {25691, 90}, {28619, 120}, {28630, 120}, {31057, 145}, {31068, 145}, {33414, 170}, {33426, 170}, {36391, 200}, {36402, 200}, {38727, 224}}, false};
 const ST_BOUND rightLane1 = {{{-3913, -588}, {-2077, -569}, {-2066, -569}, {0, -547}, {11, -547}, {2142, -525}, {2153, -525}, {2676, -520}, {2678, -520}, {3206, -514}, {3222, -514}, {3737, -509}, {3758, -508}, {4295, -503}, {4306, -503}, {7193, -473}, {7204, -473}, {9515, -449}, {9526, -449}, {12013, -423}, {12024, -423}, {15471, -388}, {15482, -388}, {18212, -359}, {18223, -359}, {20740, -333}, {20751, -333}, {22820, -312}, {22831, -312}, {25683, -282}, {25695, -282}, {28623, -252}, {28634, -252}, {31061, -227}, {31072, -227}, {33418, -202}, {33429, -202}, {36394, -172}, {36406, -171}, {38742, -147}}, false};
 const ST_LANE lane1 = {30622, leftLane1, rightLane1, {NONE}, {NONE}, 30624, true, NONE, false};
@@ -112,22 +121,12 @@ const bool staticObsExists = true;
 const ST_RECTANGLE staticObs[MAXSO] = {{{-1550, -40}, 100, 450, 0}};
 
 const ST_PLANNING planning = {{5054, -40}};
-//Kaige generated code ends
+// Generated scenario ends
 
-typedef struct {
-    uint16_t time;
-    double acceleration;
-    double yawRate;
-}ST_PAIR;
-
-const int P = 1;
-const uint8_t MAXTIME = 30;
-const uint8_t pLen0 = 5;
-const ST_PAIR policy0[pLen0] = {{0, 0.0, 0.0}, {2, 0.0, -0.4}, {4, 0.0, 0.4}, {6, 0.0, 0.0}, {MAXTIME, 0.0, 0.0}};
 broadcast chan chooseEgo, chooseObs, begin, update;
 
 ST_DSTATE dStateEgo;
-ST_VARIABLES vars;      // continuous variables
+ST_VARIABLES varsEgo;      // continuous variables
 hybrid clock D;         /// "cost" of distance used in strategy optimization
 clock time;             // global time
 
@@ -373,7 +372,7 @@ bool check_collision(ST_RECTANGLE veh_st_rect1, ST_RECTANGLE veh_st_rect2, int d
 </declaration>
 	<template>
 		<name x="5" y="5">MovingObs</name>
-		<parameter>const id_t ID, const ST_CSTATE &amp;initCS, const ST_RECTANGLE &amp;shape</parameter>
+		<parameter>const id_t ID, const ST_CSTATE &amp;initCS, const ST_RECTANGLE &amp;shape, const uint8_t tLen, const ST_PAIR trajectory[MAXTP]</parameter>
 		<declaration>// Place local declarations here.
 ST_VARIABLES vars;  // continuous variables
 ST_DSTATE dState;   // discrete state
@@ -381,18 +380,23 @@ uint8_t pc = 0;     // policy counter
 uint8_t tc = 0;     // time counter
 ST_RECTANGLE self;
 
+// Generated trajectory starts
+//const uint8_t tLen = 3;
+//const ST_PAIR trajectory[tLen] = {{0,{{-20.0,-0.4},3.5,0.0,0.0,0.0}},{1,{{-23.5,-0.4},3.5,0.0,0.0,0.0}},{MAXTIME,{{15.0,-0.4},3.5,0.0,0.0,0.0}}};
+// Generated part ends
+
 void decisionMaking() {
-    if(pc &lt; pLen0 &amp;&amp; tc == policy0[pc].time) {
-        vars.acceleration = policy0[pc].acceleration;
-        vars.yawRate = policy0[pc].yawRate;
-        dState.acceleration = d2i(policy0[pc].acceleration);
-        dState.yawRate = d2i(policy0[pc].yawRate);
+    if(pc &lt; tLen &amp;&amp; tc == trajectory[pc].time) {
+        vars.acceleration = trajectory[pc].cState.acceleration;
+        vars.yawRate = trajectory[pc].cState.yawRate;
+        dState.acceleration = d2i(trajectory[pc].cState.acceleration);
+        dState.yawRate = d2i(trajectory[pc].cState.yawRate);
         pc++;
     }
-    else if(pc &lt; pLen0) {
+    else if(pc &lt; tLen) {
         tc++;
     }
-    else if(pc &gt;= pLen0 - 1) {
+    else if(pc &gt;= tLen - 1) {
         vars.velocity = 0;
         vars.acceleration = 0;
         vars.yawRate = 0;
@@ -526,17 +530,17 @@ ST_RECTANGLE self;
 
 void opConst() {
     dStateEgo.acceleration = 0;
-    vars.acceleration = 0;
+    varsEgo.acceleration = 0;
 }
 
 void opAcc(int gear) {
     dStateEgo.acceleration = Push[gear];
-    vars.acceleration = i2d(Push[gear]);
+    varsEgo.acceleration = i2d(Push[gear]);
 }
 
 void opBrake(int gear) {
     dStateEgo.acceleration = Brake[gear];
-    vars.acceleration = i2d(Brake[gear]);
+    varsEgo.acceleration = i2d(Brake[gear]);
 }
 
 /*int nextX = 0;
@@ -559,12 +563,12 @@ void opTurn(int dir) {
     nextOrientation = no;*/
 
     dStateEgo.yawRate = Turn[dir];
-    vars.yawRate = i2d(Turn[dir]);
+    varsEgo.yawRate = i2d(Turn[dir]);
 }
 
 void keep() {
     dStateEgo.yawRate = 0;
-    vars.yawRate = 0.0;
+    varsEgo.yawRate = 0.0;
 }
 
 bool canAcc(int gear) {
@@ -902,12 +906,12 @@ void updateCon(ST_VARIABLES &amp;vars) {
 }</declaration>
 		<location id="id36" x="0" y="0">
 			<name x="-59" y="-8">Move</name>
-			<label kind="invariant" x="-161" y="17">vars.x' == vars.velocity*cos(vars.orientation) &amp;&amp;
-vars.y' == vars.velocity*sin(vars.orientation) &amp;&amp;
-vars.velocity' == vars.acceleration &amp;&amp;
-vars.orientation' == vars.yawRate &amp;&amp;
-vars.yawRate' == 0 &amp;&amp;
-vars.acceleration' == 0 &amp;&amp;
+			<label kind="invariant" x="-161" y="17">varsEgo.x' == varsEgo.velocity*cos(varsEgo.orientation) &amp;&amp;
+varsEgo.y' == varsEgo.velocity*sin(varsEgo.orientation) &amp;&amp;
+varsEgo.velocity' == varsEgo.acceleration &amp;&amp;
+varsEgo.orientation' == varsEgo.yawRate &amp;&amp;
+varsEgo.yawRate' == 0 &amp;&amp;
+varsEgo.acceleration' == 0 &amp;&amp;
 D' == getDisP2P(dStateEgo.position, planning.goal) 
       - dStateEgo.detection.reach * 100 
       + dStateEgo.detection.collide * 50 
@@ -918,7 +922,7 @@ D' == getDisP2P(dStateEgo.position, planning.goal)
 			<source ref="id36"/>
 			<target ref="id36"/>
 			<label kind="synchronisation" x="68" y="-68">update?</label>
-			<label kind="assignment" x="68" y="-51">updateCon(vars)</label>
+			<label kind="assignment" x="68" y="-51">updateCon(varsEgo)</label>
 			<nail x="68" y="-68"/>
 			<nail x="68" y="-34"/>
 		</transition>
@@ -926,16 +930,21 @@ D' == getDisP2P(dStateEgo.position, planning.goal)
 			<source ref="id36"/>
 			<target ref="id36"/>
 			<label kind="synchronisation" x="-161" y="-68">begin?</label>
-			<label kind="assignment" x="-161" y="-51">initCon(vars)</label>
+			<label kind="assignment" x="-161" y="-51">initCon(varsEgo)</label>
 			<nail x="-68" y="-34"/>
 			<nail x="-68" y="-68"/>
 		</transition>
 	</template>
 	<system>// Place template instantiations here.
 //const ST_DSTATE initDS1 = {{225, 350}, 230, 0, 0, 0};
-const ST_CSTATE initCS1 = {{2.25, 3.50}, 2.30, 0.0, 0.0, 0.0};
-const ST_RECTANGLE shapeObs1 = {{225, 350}, 200, 450, 0};
-obs1 = MovingObs(1, initCS1, shapeObs1);
+const ST_PAIR PHOLDER = {NONE,{{NONE,NONE},NONE,NONE,NONE,NONE}};
+// Generated moving obstacles starts
+const ST_CSTATE initCS1 = {{2.25, 3.50}, 2.30, 0.0, 0.0, 0.0};  // initial state of a moving obstacle
+const ST_RECTANGLE shapeObs1 = {{225, 350}, 200, 450, 0};       // shape of a moving obstacle 
+const uint8_t tLen1 = 3;    //length of the trajectory of a moving obstacle
+const ST_PAIR trajectory1[MAXTP] = {{0,{{-20.0,-0.4},3.5,0.0,0.0,0.0}},{1,{{-23.5,-0.4},3.5,0.0,0.0,0.0}},{MAXTIME,{{15.0,-0.4},3.5,0.0,0.0,0.0}},PHOLDER,PHOLDER}; // the trajectory
+obs1 = MovingObs(1, initCS1, shapeObs1, tLen1, trajectory1); // define the moving obstacle
+// Generated moving obstacles ends
 
 const ST_CSTATE initEgo = {{-39.0, -0.4}, 3.0, 0.0, 0.0, 0.0};
 const ST_RECTANGLE shapeEgo = {{-3900, -40}, 100, 450, 0};
@@ -955,35 +964,35 @@ system Decisions, egoController, egoDynamics, obs1;
 		<option key="--runs-pr-state" value="10"/>
 		<option key="--diagnostic" value="0"/>
 		<query>
-			<formula>simulate [&lt;=30] { obs1.vars.x, obs1.vars.y }</formula>
+			<formula>simulate [&lt;=MAXTIME] { obs1.vars.x, obs1.vars.y }</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=30] { obs1.vars.velocity, obs1.vars.orientation, obs1.vars.yawRate, obs1.vars.acceleration }</formula>
+			<formula>simulate [&lt;=MAXTIME] { obs1.vars.velocity, obs1.vars.orientation, obs1.vars.yawRate, obs1.vars.acceleration }</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=30] { obs1.vars.acceleration, i2d(obs1.dState.acceleration) }</formula>
+			<formula>simulate [&lt;=MAXTIME] { obs1.vars.acceleration, i2d(obs1.dState.acceleration) }</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=30] { obs1.vars.yawRate, i2d(obs1.dState.yawRate) }</formula>
+			<formula>simulate [&lt;=MAXTIME] { obs1.vars.yawRate, i2d(obs1.dState.yawRate) }</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=30] { obs1.vars.velocity, i2d(obs1.dState.velocity) }</formula>
+			<formula>simulate [&lt;=MAXTIME] { obs1.vars.velocity, i2d(obs1.dState.velocity) }</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=30] { obs1.vars.orientation, i2d(obs1.dState.orientation) }</formula>
+			<formula>simulate [&lt;=MAXTIME] { obs1.vars.orientation, i2d(obs1.dState.orientation) }</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=30] { obs1.vars.x, i2d(obs1.dState.position.x), obs1.vars.y, i2d(obs1.dState.position.y) }</formula>
+			<formula>simulate [&lt;=MAXTIME] { obs1.vars.x, i2d(obs1.dState.position.x), obs1.vars.y, i2d(obs1.dState.position.y) }</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=30;100] { sqrt(pow(obs1.vars.x-i2d(obs1.dState.position.x),2) + pow(obs1.vars.y-i2d(obs1.dState.position.y),2)) }</formula>
+			<formula>simulate [&lt;=MAXTIME;100] { sqrt(pow(obs1.vars.x-i2d(obs1.dState.position.x),2) + pow(obs1.vars.y-i2d(obs1.dState.position.y),2)) }</formula>
 			<comment/>
 		</query>
 		<query>
@@ -991,7 +1000,7 @@ system Decisions, egoController, egoDynamics, obs1;
 			<comment>//</comment>
 		</query>
 		<query>
-			<formula>simulate [&lt;=30;100] { vars.x-i2d(dStateEgo.position.x), vars.y-i2d(dStateEgo.position.y) }</formula>
+			<formula>simulate [&lt;=MAXTIME;100] { varsEgo.x-i2d(dStateEgo.position.x), varsEgo.y-i2d(dStateEgo.position.y) }</formula>
 			<comment/>
 		</query>
 		<query>
@@ -1009,26 +1018,10 @@ system Decisions, egoController, egoDynamics, obs1;
 		<query>
 			<formula>E[] !dStateEgo.detection.outside &amp;&amp; !dStateEgo.detection.collide</formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-07 14:38:36 +0200">
-				<option key="--total-runs" value="50"/>
-				<option key="--max-iterations" value="3"/>
-				<option key="--good-runs" value="20"/>
-				<option key="--eval-runs" value="10"/>
-				<option key="--runs-pr-state" value="10"/>
-				<option key="--diagnostic" value="0"/>
-			</result>
 		</query>
 		<query>
 			<formula>E&lt;&gt; dStateEgo.detection.collide</formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-07 13:35:34 +0200">
-				<option key="--total-runs" value="50"/>
-				<option key="--max-iterations" value="3"/>
-				<option key="--good-runs" value="20"/>
-				<option key="--eval-runs" value="10"/>
-				<option key="--runs-pr-state" value="10"/>
-				<option key="--diagnostic" value="0"/>
-			</result>
 		</query>
 		<query>
 			<formula>E&lt;&gt; dStateEgo.detection.reach &amp;&amp; !dStateEgo.detection.outside &amp;&amp; !dStateEgo.detection.collide</formula>
@@ -1041,9 +1034,6 @@ system Decisions, egoController, egoDynamics, obs1;
 		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside</formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-07 13:24:20 +0200">
-				<option key="--diagnostic" value="0"/>
-			</result>
 		</query>
 		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.outside</formula>
@@ -1054,19 +1044,19 @@ system Decisions, egoController, egoDynamics, obs1;
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=30] { vars.acceleration, i2d(dStateEgo.acceleration), vars.velocity, i2d(dStateEgo.velocity) } under safe</formula>
+			<formula>simulate [&lt;=MAXTIME] { varsEgo.acceleration, i2d(dStateEgo.acceleration), varsEgo.velocity, i2d(dStateEgo.velocity) } under safe</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=30] { vars.yawRate, i2d(dStateEgo.orientation), vars.orientation } under safe</formula>
+			<formula>simulate [&lt;=MAXTIME] { varsEgo.yawRate, i2d(dStateEgo.orientation), varsEgo.orientation } under safe</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=30] { vars.x, i2d(dStateEgo.position.x), vars.y, i2d(dStateEgo.position.y) } under safe</formula>
+			<formula>simulate [&lt;=MAXTIME] { varsEgo.x, i2d(dStateEgo.position.x), varsEgo.y, i2d(dStateEgo.position.y) } under safe</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=30;100] { vars.x-i2d(dStateEgo.position.x), vars.y-i2d(dStateEgo.position.y) } under safe</formula>
+			<formula>simulate [&lt;=MAXTIME;100] { varsEgo.x-i2d(dStateEgo.position.x), varsEgo.y-i2d(dStateEgo.position.y) } under safe</formula>
 			<comment/>
 		</query>
 		<query>
@@ -1096,11 +1086,11 @@ system Decisions, egoController, egoDynamics, obs1;
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=30;100] { getDisP2P(dStateEgo.position, planning.goal) } under safe</formula>
+			<formula>simulate [&lt;=MAXTIME;100] { getDisP2P(dStateEgo.position, planning.goal) } under safe</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=30;100] { getDisP2P(dStateEgo.position, planning.goal) } under reachSafe</formula>
+			<formula>simulate [&lt;=MAXTIME;100] { getDisP2P(dStateEgo.position, planning.goal) } under reachSafe</formula>
 			<comment/>
 		</query>
 		<query>
@@ -1108,11 +1098,11 @@ system Decisions, egoController, egoDynamics, obs1;
 			<comment/>
 		</query>
 		<query>
-			<formula>E[&lt;=100;100](min:getDisP2P(dStateEgo.position, staticObs[0].center)) under reachSafe</formula>
+			<formula>E[&lt;=MAXTIME;100](min:getDisP2P(dStateEgo.position, staticObs[0].center)) under reachSafe</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>E[&lt;=100;100](min:getDisP2P(dStateEgo.position, planning.goal)) under reachSafe</formula>
+			<formula>E[&lt;=MAXTIME;100](min:getDisP2P(dStateEgo.position, planning.goal)) under reachSafe</formula>
 			<comment/>
 		</query>
 		<query>
@@ -1138,15 +1128,15 @@ system Decisions, egoController, egoDynamics, obs1;
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=MAXTIME] { vars.x, i2d(dStateEgo.position.x), vars.y, i2d(dStateEgo.position.y) } under reach</formula>
+			<formula>simulate [&lt;=MAXTIME] { varsEgo.x, i2d(dStateEgo.position.x), varsEgo.y, i2d(dStateEgo.position.y) } under reach</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>E[&lt;=100;100](min:getDisP2P(dStateEgo.position, staticObs[0].center)) under reach</formula>
+			<formula>E[&lt;=MAXTIME;100](min:getDisP2P(dStateEgo.position, staticObs[0].center)) under reach</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>E[&lt;=100;100](min:getDisP2P(dStateEgo.position, planning.goal)) under reach</formula>
+			<formula>E[&lt;=MAXTIME;100](min:getDisP2P(dStateEgo.position, planning.goal)) under reach</formula>
 			<comment/>
 		</query>
 	</queries>

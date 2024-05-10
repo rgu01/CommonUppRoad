@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
 <nta>
-	<declaration>// Kaige geneted code starts
+	<declaration>// Generated scenario starts
 const int P = 1;
-const uint8_t MAXTIME = 10;
-const int MAXP = 40;
-const int NONE = -1;
-const int MAXL = 3;
-const int MAXSO = 1;
-const int MAXDO = 1;
-const int MAXPRE = 1;
-const int MAXSUC = 1;
+const uint8_t MAXTIME = 10; // max learning time: default value 10
+const int MAXP = 40; // max points in a lane
+const int NONE = -1; // default value of NONE
+const int MAXL = 3;  // max number of lanes
+const int MAXSO = 1; // max number of static obstacles
+const int MAXDO = 1; // max number of dynamic (moving) obstacles
+const int MAXTP = 5; // max points in trajectories of moving obstacles
+const int MAXPRE = 1; // max precessors of a lane
+const int MAXSUC = 1; // max successors of a lane
 const double SCALE = 100.0; // scale from int to double: 100 = 1.0
-const int THRESHOLD = 200;
+const int THRESHOLD = 200; //threshold of collision and offroad
 
 typedef int[-1,65535] id_t;
 
@@ -97,6 +98,11 @@ typedef struct {
     ST_DPOINT goal;
 }ST_PLANNING;
 
+typedef struct {
+    int32_t time;
+    ST_CSTATE cState;
+}ST_PAIR;
+
 const ST_BOUND leftLane1 = {{{-3928, -215}, {-2081, -196}, {-2070, -196}, {-3, -174}, {7, -174}, {2138, -152}, {2149, -152}, {2672, -147}, {2674, -147}, {3202, -141}, {3218, -141}, {3734, -136}, {3754, -136}, {4291, -130}, {4303, -130}, {7189, -100}, {7201, -100}, {9511, -76}, {9522, -76}, {12009, -50}, {12020, -50}, {15467, -15}, {15478, -15}, {18208, 13}, {18219, 13}, {20736, 39}, {20747, 39}, {22816, 60}, {22828, 60}, {25679, 90}, {25691, 90}, {28619, 120}, {28630, 120}, {31057, 145}, {31068, 145}, {33414, 170}, {33426, 170}, {36391, 200}, {36402, 200}, {38727, 224}}, false};
 const ST_BOUND rightLane1 = {{{-3913, -588}, {-2077, -569}, {-2066, -569}, {0, -547}, {11, -547}, {2142, -525}, {2153, -525}, {2676, -520}, {2678, -520}, {3206, -514}, {3222, -514}, {3737, -509}, {3758, -508}, {4295, -503}, {4306, -503}, {7193, -473}, {7204, -473}, {9515, -449}, {9526, -449}, {12013, -423}, {12024, -423}, {15471, -388}, {15482, -388}, {18212, -359}, {18223, -359}, {20740, -333}, {20751, -333}, {22820, -312}, {22831, -312}, {25683, -282}, {25695, -282}, {28623, -252}, {28634, -252}, {31061, -227}, {31072, -227}, {33418, -202}, {33429, -202}, {36394, -172}, {36406, -171}, {38742, -147}}, false};
 const ST_LANE lane1 = {30622, leftLane1, rightLane1, {NONE}, {NONE}, 30624, true, NONE, false};
@@ -115,7 +121,7 @@ const bool staticObsExists = true;
 const ST_RECTANGLE staticObs[MAXSO] = {{{-1550, -40}, 100, 450, 0}};
 
 const ST_PLANNING planning = {{5054, -40}};
-//Kaige generated code ends
+// Generated scenario ends
 
 broadcast chan chooseEgo, chooseObs, begin, update;
 
@@ -366,7 +372,7 @@ bool check_collision(ST_RECTANGLE veh_st_rect1, ST_RECTANGLE veh_st_rect2, int d
 </declaration>
 	<template>
 		<name x="5" y="5">MovingObs</name>
-		<parameter>const id_t ID, const ST_CSTATE &amp;initCS, const ST_RECTANGLE &amp;shape</parameter>
+		<parameter>const id_t ID, const ST_CSTATE &amp;initCS, const ST_RECTANGLE &amp;shape, const uint8_t tLen, const ST_PAIR trajectory[MAXTP]</parameter>
 		<declaration>// Place local declarations here.
 ST_VARIABLES vars;  // continuous variables
 ST_DSTATE dState;   // discrete state
@@ -374,13 +380,10 @@ uint8_t pc = 0;     // policy counter
 uint8_t tc = 0;     // time counter
 ST_RECTANGLE self;
 
-typedef struct {
-    uint16_t time;
-    ST_CSTATE cState;
-}ST_PAIR;
-
-const uint8_t tLen = 3;
-const ST_PAIR trajectory[tLen] = {{0,{{-20.0,-0.4},3.5,0.0,0.0,0.0}},{1,{{-23.5,-0.4},3.5,0.0,0.0,0.0}},{MAXTIME,{{15.0,-0.4},3.5,0.0,0.0,0.0}}};
+// Generated trajectory starts
+//const uint8_t tLen = 3;
+//const ST_PAIR trajectory[tLen] = {{0,{{-20.0,-0.4},3.5,0.0,0.0,0.0}},{1,{{-23.5,-0.4},3.5,0.0,0.0,0.0}},{MAXTIME,{{15.0,-0.4},3.5,0.0,0.0,0.0}}};
+// Generated part ends
 
 void decisionMaking() {
     if(pc &lt; tLen &amp;&amp; tc == trajectory[pc].time) {
@@ -934,9 +937,14 @@ D' == getDisP2P(dStateEgo.position, planning.goal)
 	</template>
 	<system>// Place template instantiations here.
 //const ST_DSTATE initDS1 = {{225, 350}, 230, 0, 0, 0};
-const ST_CSTATE initCS1 = {{2.25, 3.50}, 2.30, 0.0, 0.0, 0.0};
-const ST_RECTANGLE shapeObs1 = {{225, 350}, 200, 450, 0};
-obs1 = MovingObs(1, initCS1, shapeObs1);
+const ST_PAIR PHOLDER = {NONE,{{NONE,NONE},NONE,NONE,NONE,NONE}};
+// Generated moving obstacles starts
+const ST_CSTATE initCS1 = {{2.25, 3.50}, 2.30, 0.0, 0.0, 0.0};  // initial state of a moving obstacle
+const ST_RECTANGLE shapeObs1 = {{225, 350}, 200, 450, 0};       // shape of a moving obstacle 
+const uint8_t tLen1 = 3;    //length of the trajectory of a moving obstacle
+const ST_PAIR trajectory1[MAXTP] = {{0,{{-20.0,-0.4},3.5,0.0,0.0,0.0}},{1,{{-23.5,-0.4},3.5,0.0,0.0,0.0}},{MAXTIME,{{15.0,-0.4},3.5,0.0,0.0,0.0}},PHOLDER,PHOLDER}; // the trajectory
+obs1 = MovingObs(1, initCS1, shapeObs1, tLen1, trajectory1); // define the moving obstacle
+// Generated moving obstacles ends
 
 const ST_CSTATE initEgo = {{-39.0, -0.4}, 3.0, 0.0, 0.0, 0.0};
 const ST_RECTANGLE shapeEgo = {{-3900, -40}, 100, 450, 0};
@@ -958,25 +966,6 @@ system Decisions, egoController, egoDynamics, obs1;
 		<query>
 			<formula>simulate [&lt;=MAXTIME] { obs1.vars.x, obs1.vars.y }</formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-10 10:26:47 +0200">
-				<option key="--total-runs" value="50"/>
-				<option key="--max-iterations" value="3"/>
-				<option key="--good-runs" value="20"/>
-				<option key="--eval-runs" value="10"/>
-				<option key="--runs-pr-state" value="10"/>
-				<option key="--diagnostic" value="0"/>
-				<plot title="Simulations (1)" xaxis="time" yaxis="value">
-					<series title="(obs1.vars).x" type="l" color="0xff0000" encoding="csv">0.0,0.0
-0.0,2.25
-10.000002,25.250004599999762
-					</series>
-					<series title="(obs1.vars).y" type="l" color="0x00ffff" encoding="csv">0.0,0.0
-0.0,3.5
-10.000002,3.5
-					</series>
-					<comment/>
-				</plot>
-			</result>
 		</query>
 		<query>
 			<formula>simulate [&lt;=MAXTIME] { obs1.vars.velocity, obs1.vars.orientation, obs1.vars.yawRate, obs1.vars.acceleration }</formula>

@@ -9,7 +9,7 @@ const int NONE = -1; // default value of NONE
 const int MAXL = 3;  // max number of lanes
 const int MAXSO = 1; // max number of static obstacles
 const int MAXDO = 1; // max number of dynamic (moving) obstacles
-const int MAXTP = 5; // max points in trajectories of moving obstacles
+const int MAXTP = 3; // max points in trajectories of moving obstacles
 const int MAXPRE = 1; // max precessors of a lane
 const int MAXSUC = 1; // max successors of a lane
 const double SCALE = 100.0; // scale from int to double: 100 = 1.0
@@ -372,7 +372,7 @@ bool check_collision(ST_RECTANGLE veh_st_rect1, ST_RECTANGLE veh_st_rect2, int d
 </declaration>
 	<template>
 		<name x="5" y="5">MovingObs</name>
-		<parameter>const id_t ID, const ST_CSTATE &amp;initCS, const ST_RECTANGLE &amp;shape, const uint8_t tLen, const ST_PAIR trajectory[MAXTP]</parameter>
+		<parameter>const id_t ID, const ST_CSTATE &amp;initCS, const ST_RECTANGLE &amp;shape, const ST_PAIR trajectory[MAXTP]</parameter>
 		<declaration>// Place local declarations here.
 ST_VARIABLES vars;  // continuous variables
 ST_DSTATE dState;   // discrete state
@@ -386,17 +386,17 @@ ST_RECTANGLE self;
 // Generated part ends
 
 void decisionMaking() {
-    if(pc &lt; tLen &amp;&amp; tc == trajectory[pc].time) {
+    if(pc &lt; MAXTP &amp;&amp; tc == trajectory[pc].time) {
         vars.acceleration = trajectory[pc].cState.acceleration;
         vars.yawRate = trajectory[pc].cState.yawRate;
         dState.acceleration = d2i(trajectory[pc].cState.acceleration);
         dState.yawRate = d2i(trajectory[pc].cState.yawRate);
         pc++;
     }
-    else if(pc &lt; tLen) {
+    else if(pc &lt; MAXTP) {
         tc++;
     }
-    else if(pc &gt;= tLen - 1) {
+    else if(pc &gt;= MAXTP - 1) {
         vars.velocity = 0;
         vars.acceleration = 0;
         vars.yawRate = 0;
@@ -935,15 +935,11 @@ D' == getDisP2P(dStateEgo.position, planning.goal)
 			<nail x="-68" y="-68"/>
 		</transition>
 	</template>
-	<system>// Place template instantiations here.
-//const ST_DSTATE initDS1 = {{225, 350}, 230, 0, 0, 0};
-const ST_PAIR PHOLDER = {NONE,{{NONE,NONE},NONE,NONE,NONE,NONE}};
-// Generated moving obstacles starts
-const ST_CSTATE initCS1 = {{2.25, 3.50}, 2.30, 0.0, 0.0, 0.0};  // initial state of a moving obstacle
-const ST_RECTANGLE shapeObs1 = {{225, 350}, 200, 450, 0};       // shape of a moving obstacle 
-const uint8_t tLen1 = 3;    //length of the trajectory of a moving obstacle
-const ST_PAIR trajectory1[MAXTP] = {{0,{{-20.0,-0.4},3.5,0.0,0.0,0.0}},{1,{{-23.5,-0.4},3.5,0.0,0.0,0.0}},{MAXTIME,{{15.0,-0.4},3.5,0.0,0.0,0.0}},PHOLDER,PHOLDER}; // the trajectory
-obs1 = MovingObs(1, initCS1, shapeObs1, tLen1, trajectory1); // define the moving obstacle
+	<system>// Generated moving obstacles starts
+const ST_CSTATE initCS1 = {{-16.5, -0.4}, 3.5, 0.0, 0.0, 0.0};  // initial state of a moving obstacle
+const ST_RECTANGLE shapeObs1 = {{-165, -40}, 200, 450, 0};       // shape of a moving obstacle 
+const ST_PAIR trajectory1[MAXTP] = {{1,{{-20.0,-0.4},3.5,0.0,0.0,0.0}},{2,{{-23.5,-0.4},3.5,0.0,0.0,0.0}},{3,{{15.0,-0.4},3.5,0.0,0.0,0.0}}}; // the trajectory
+obs1 = MovingObs(1, initCS1, shapeObs1, trajectory1); // define the moving obstacle
 // Generated moving obstacles ends
 
 const ST_CSTATE initEgo = {{-39.0, -0.4}, 3.0, 0.0, 0.0, 0.0};
@@ -952,9 +948,9 @@ const ST_RULES rules = {400, 0, 20, -20};
 egoController = Controller(1, initEgo, shapeEgo, rules);
 egoDynamics = Dynamics(1, initEgo);
 
-// List one or more processes to be composed into a system.
+// Generated model instances start
 system Decisions, egoController, egoDynamics, obs1;
-//system Decisions, obs1;
+// Generated model instances end
 </system>
 	<queries>
 		<option key="--total-runs" value="50"/>

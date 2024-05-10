@@ -2,6 +2,125 @@
 <!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
 <nta>
 	<declaration>// Generated scenario starts
+const int P = 1;
+const uint8_t MAXTIME = 10;
+const int MAXP = 40;
+const int NONE = -1;
+const int MAXL = 3;
+const int MAXSO = 1;
+const int MAXDO = 2;
+const int MAXTP = 50;
+const int MAXPRE = 1;
+const int MAXSUC = 1;
+const double SCALE = 100.0;
+const int THRESHOLD = 200;
+
+typedef int[-1,65535] id_t;
+
+typedef struct {
+    int32_t x;
+    int32_t y;
+}ST_DPOINT;
+
+typedef struct {
+    double x;
+    double y;
+}ST_CPOINT;
+
+typedef struct {
+    ST_DPOINT ends[2];
+}ST_DLINE;
+
+typedef struct {
+    ST_DPOINT points[MAXP];
+    bool dashLine;
+}ST_BOUND;
+
+typedef struct {
+    id_t ID;
+    ST_BOUND left;
+    ST_BOUND right;
+    id_t predecessor[MAXPRE];
+    id_t successor[MAXSUC];
+    id_t adjLeft;
+    bool dirLeft;
+    id_t adjRight;
+    bool dirRight;
+}ST_LANE;
+
+typedef struct {
+    bool collide; // collision
+    bool outside; // outside road
+    bool reach;   // reach the goal
+}ST_DETECTION;
+
+typedef struct {
+    ST_CPOINT position;
+    double velocity;
+    double orientation;
+    double acceleration;
+    double yawRate;
+}ST_CSTATE;
+
+typedef struct {
+    ST_DPOINT position;
+    int16_t velocity;
+    int16_t orientation;
+    int16_t acceleration;
+    int16_t yawRate;
+    ST_DETECTION detection;
+}ST_DSTATE;
+
+typedef struct {
+    hybrid clock x;
+    hybrid clock y;
+    hybrid clock velocity;
+    hybrid clock orientation;
+    hybrid clock acceleration;
+    hybrid clock yawRate;
+}ST_VARIABLES;
+
+typedef struct {
+    ST_DPOINT center;
+    int16_t width;
+    int16_t length;
+    int16_t orientation;
+}ST_RECTANGLE;
+
+typedef struct {
+    int maxVelocity;
+    int minVelocity;
+    int maxOrientation;
+    int minOrientation;
+}ST_RULES;
+
+typedef struct {
+    ST_DPOINT goal;
+}ST_PLANNING;
+
+typedef struct {
+    int32_t time;
+    ST_CSTATE cState;
+}ST_PAIR;
+const ST_BOUND leftLane1 = {{{-3928, -215}, {-2081, -196}, {-2070, -196}, {-3, -174}, {7, -174}, {2138, -152}, {2149, -152}, {2672, -147}, {2674, -147}, {3202, -141}, {3218, -141}, {3734, -136}, {3754, -136}, {4291, -130}, {4303, -130}, {7189, -100}, {7201, -100}, {9511, -76}, {9522, -76}, {12009, -50}, {12020, -50}, {15467, -15}, {15478, -15}, {18208, 13}, {18219, 13}, {20736, 39}, {20747, 39}, {22816, 60}, {22828, 60}, {25679, 90}, {25691, 90}, {28619, 120}, {28630, 120}, {31057, 145}, {31068, 145}, {33414, 170}, {33426, 170}, {36391, 200}, {36402, 200}, {38727, 224}}, false};
+const ST_BOUND rightLane1 = {{{-3913, -588}, {-2077, -569}, {-2066, -569}, {0, -547}, {11, -547}, {2142, -525}, {2153, -525}, {2676, -520}, {2678, -520}, {3206, -514}, {3222, -514}, {3737, -509}, {3758, -508}, {4295, -503}, {4306, -503}, {7193, -473}, {7204, -473}, {9515, -449}, {9526, -449}, {12013, -423}, {12024, -423}, {15471, -388}, {15482, -388}, {18212, -359}, {18223, -359}, {20740, -333}, {20751, -333}, {22820, -312}, {22831, -312}, {25683, -282}, {25695, -282}, {28623, -252}, {28634, -252}, {31061, -227}, {31072, -227}, {33418, -202}, {33429, -202}, {36394, -172}, {36406, -171}, {38742, -147}}, false};
+const ST_LANE lane1 = {30622, leftLane1, rightLane1, {NONE}, {NONE}, 30624, true, NONE, false};
+
+const ST_BOUND leftLane2 = {{{-3927, 134}, {-2085, 153}, {-2080, 153}, {-7, 174}, {-1, 174}, {2134, 196}, {2139, 196}, {2670, 202}, {2683, 202}, {3198, 207}, {3222, 208}, {3730, 213}, {3735, 213}, {4288, 219}, {4293, 219}, {7186, 248}, {7191, 248}, {9507, 272}, {9513, 272}, {12005, 298}, {12010, 298}, {15464, 334}, {15469, 334}, {18204, 362}, {18209, 362}, {20733, 388}, {20738, 388}, {22813, 410}, {22818, 410}, {25676, 439}, {25681, 439}, {28615, 470}, {28621, 470}, {31053, 495}, {31058, 495}, {33411, 519}, {33416, 519}, {36387, 550}, {36392, 550}, {38728, 574}}, false};
+const ST_BOUND rightLane2 = {{{-3928, -215}, {-2081, -196}, {-2076, -196}, {-3, -174}, {1, -174}, {2138, -152}, {2143, -152}, {2674, -147}, {2687, -147}, {3202, -141}, {3226, -141}, {3734, -136}, {3739, -136}, {4291, -130}, {4297, -130}, {7189, -100}, {7195, -100}, {9511, -76}, {9516, -76}, {12009, -50}, {12014, -50}, {15467, -15}, {15472, -15}, {18208, 13}, {18213, 13}, {20736, 39}, {20741, 39}, {22816, 60}, {22822, 60}, {25679, 90}, {25685, 90}, {28619, 120}, {28624, 120}, {31057, 145}, {31062, 145}, {33414, 170}, {33420, 170}, {36391, 200}, {36396, 200}, {38727, 224}}, false};
+const ST_LANE lane2 = {30624, leftLane2, rightLane2, {NONE}, {NONE}, 30626, true, 30622, true};
+
+const ST_BOUND leftLane3 = {{{-3949, 487}, {-2102, 506}, {-2083, 506}, {-23, 527}, {-5, 528}, {2117, 549}, {2136, 550}, {2648, 555}, {2679, 555}, {3182, 560}, {3219, 561}, {3700, 566}, {3731, 566}, {4271, 572}, {4289, 572}, {7169, 602}, {7187, 602}, {9491, 626}, {9509, 626}, {11988, 651}, {12007, 651}, {15447, 687}, {15465, 687}, {18187, 715}, {18206, 715}, {20716, 741}, {20734, 742}, {22796, 763}, {22814, 763}, {25659, 792}, {25677, 793}, {28599, 823}, {28617, 823}, {31036, 848}, {31055, 848}, {33394, 872}, {33412, 872}, {36370, 903}, {36389, 903}, {38706, 927}}, false};
+const ST_BOUND rightLane3 = {{{-3927, 134}, {-2098, 153}, {-2080, 153}, {-20, 174}, {-1, 174}, {2121, 196}, {2139, 196}, {2652, 202}, {2683, 202}, {3186, 207}, {3222, 208}, {3704, 212}, {3735, 213}, {4275, 218}, {4293, 219}, {7173, 248}, {7191, 248}, {9494, 272}, {9513, 272}, {11992, 298}, {12010, 298}, {15450, 334}, {15469, 334}, {18191, 362}, {18209, 362}, {20719, 388}, {20738, 388}, {22800, 410}, {22818, 410}, {25663, 439}, {25681, 439}, {28602, 469}, {28621, 470}, {31040, 495}, {31058, 495}, {33398, 519}, {33416, 519}, {36374, 550}, {36392, 550}, {38728, 574}}, false};
+const ST_LANE lane3 = {30626, leftLane3, rightLane3, {NONE}, {NONE}, NONE, false, 30624, true};
+
+const ST_LANE laneNet[MAXL] = {lane1, lane2, lane3};
+
+const bool staticObsExists = false;
+const ST_RECTANGLE staticObs[MAXSO] = {{{NONE, NONE}, NONE, NONE, NONE}};
+
+const ST_PLANNING planning = {{17406, -181}};
+
 
 // Generated scenario ends
 
@@ -821,6 +940,11 @@ D' == getDisP2P(dStateEgo.position, planning.goal)
 //const ST_DSTATE initDS1 = {{225, 350}, 230, 0, 0, 0};
 const ST_PAIR PHOLDER = {NONE,{{NONE,NONE},NONE,NONE,NONE,NONE}};
 // Generated moving obstacles starts
+const ST_CSTATE initCS1 = {{26.7473, -3.3368}, 0.0, 0.0, 0.0, 0.0};
+const ST_RECTANGLE shapeObs1 = {{2674, -333}, 200, 480, 0};
+const uint8_t tLen1 = 3;
+const ST_PAIR trajectory1[MAXTP] = {{1, {{29.4471, -3.3089}, 1, 0.010312, 0, 0}}, {2, {{32.147, -3.2811}, 1, 0.010312, 0, 0}}, {3, {{34.8468, -3.2532}, 1, 0.010312, 0, 0}}, {4, {{37.5467, -3.2254}, 1, 0.010312, 0, 0}}, {5, {{40.2466, -3.1975}, 1, 0.010312, 0, 0}}, {6, {{42.9464, -3.1697}, 1, 0.010313, 0, 0}}, {7, {{45.6463, -3.1419}, 1, 0.010313, 0, 0}}, {8, {{48.3461, -3.114}, 1, 0.010313, 0, 0}}, {9, {{51.046, -3.0862}, 1, 0.010313, 0, 0}}, {10, {{53.7458, -3.0583}, 1, 0.010313, 0, 0}}, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER, PHOLDER};
+obs1 = MovingObs(1, initCS1, shapeObs1, tLen1, trajectory1);
 
 // Generated moving obstacles ends
 

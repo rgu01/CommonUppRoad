@@ -82,5 +82,10 @@ typedef struct {
 typedef struct {
     ST_DPOINT goal;
 }ST_PLANNING;
+
+typedef struct {
+    int32_t time;
+    ST_CSTATE cState;
+}ST_PAIR;
 """
     file.write(large_block)

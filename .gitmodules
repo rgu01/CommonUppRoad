@@ -1,3 +1,0 @@
-[submodule "commonroad-rl"]
-	path = commonroad-rl
-	url = https://gitlab.lrz.de/tum-cps/commonroad-rl.git

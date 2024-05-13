@@ -9,7 +9,7 @@ const int NONE = -1; // default value of NONE
 const int MAXL = 3;  // max number of lanes
 const int MAXSO = 1; // max number of static obstacles
 const int MAXDO = 1; // max number of dynamic (moving) obstacles
-const int MAXTP = 3; // max points in trajectories of moving obstacles
+const int MAXTP = 4; // max points in trajectories of moving obstacles
 const int MAXPRE = 1; // max precessors of a lane
 const int MAXSUC = 1; // max successors of a lane
 const double SCALE = 100.0; // scale from int to double: 100 = 1.0
@@ -938,7 +938,8 @@ D' == getDisP2P(dStateEgo.position, planning.goal)
 	<system>// Generated moving obstacles starts
 const ST_CSTATE initCS1 = {{-16.5, -0.4}, 3.5, 0.0, 0.0, 0.0};  // initial state of a moving obstacle
 const ST_RECTANGLE shapeObs1 = {{-165, -40}, 200, 450, 0};       // shape of a moving obstacle 
-const ST_PAIR trajectory1[MAXTP] = {{1,{{-20.0,-0.4},3.5,0.0,0.0,0.0}},{2,{{-23.5,-0.4},3.5,0.0,0.0,0.0}},{3,{{15.0,-0.4},3.5,0.0,0.0,0.0}}}; // the trajectory
+const ST_PAIR PHOLDER = {NONE,{{NONE,NONE},NONE,NONE,NONE,NONE}};
+const ST_PAIR trajectory1[MAXTP] = {{1,{{-20.0,-0.4},3.5,0.0,0.0,0.0}},{2,{{-23.5,-0.4},3.5,0.0,0.0,0.0}},{3,{{15.0,-0.4},3.5,0.0,0.0,0.0}},PHOLDER}; // the trajectory
 obs1 = MovingObs(1, initCS1, shapeObs1, trajectory1); // define the moving obstacle
 // Generated moving obstacles ends
 

@@ -52,30 +52,38 @@ def make_dynamic_obstacle(obstacle_id, data, w=1.8, l=4.3):
     return obstacle
 
 
-#file_path = './scenarios/ZAM_Tutorial-1_2_T-1.xml'
-#file_path = './CommonUppRoad/scenarios/DEU_A9-2_1_T-1.xml'
-file_path = './CommonUppRoad/parse_xml/data_xml/DEU_Ffb-1_3_T-1.xml'
-scenario, planning_problem_set = CommonRoadFileReader(file_path).open()
+# deifne variables for parsing
+SCENARIO_PATH = './parse_xml/data_xml/DEU_Ffb-1_3_T-1.xml'
+SAMPLING_LOG_PATH = './uppaal_model/sampling.log'
+N_OBS_STATES = 5
+N_NEW_OBS = 0
 
-# remove existing obstacles
-#for obst in scenario.obstacles:
-    #scenario.remove_obstacle(obst)
+
+scenario, planning_problem_set = CommonRoadFileReader(SCENARIO_PATH).open()
 
 # read sample log
-sample = read_sample_log('./CommonUppRoad/uppaal_model/sampling.log')
+sample = read_sample_log(SAMPLING_LOG_PATH)
 
 # divide data into obstacle states and ego states
-obst_states, ego_states = [], []
+ego_states = []
+new_obsts = [[]] * N_NEW_OBS
+
 for row in sample:
     t = int(row[0])
-    obst_states.append([t] + row[1:6])
-    ego_states.append([t] + row[6:])
+    obst = 0
+    obst_state = []
+    for idx in range(1, N_NEW_OBS * N_OBS_STATES, N_OBS_STATES):
+        new_obsts[obst].append([t] + row[idx:idx + N_OBS_STATES])
+        obst += 1
+
+    ego_states.append([t] + row[1 + N_NEW_OBS * N_OBS_STATES:])
 
 # create the obstacles
-obst = make_dynamic_obstacle(scenario.generate_object_id(), obst_states)
-ego = make_dynamic_obstacle(scenario.generate_object_id(), ego_states)
+for obst_states in new_obsts:
+    obst = make_dynamic_obstacle(scenario.generate_object_id(), obst_states)
+    scenario.add_objects(obst)
 
-#scenario.add_objects(obst)
+ego = make_dynamic_obstacle(scenario.generate_object_id(), ego_states)
 scenario.add_objects(ego)
 
 # render and store as gif

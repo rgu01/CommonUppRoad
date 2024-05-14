@@ -633,7 +633,6 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     int lane = 0;
     ST_DPOINT veh_corners[4];
     ST_DPOINT box_corners[4];
-    bool outside[MAXL] = {false, false, false};
     uint8_t inlane_pts_num = 0;
 
     // update discrete velocity and orientation
@@ -655,14 +654,7 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     shape.center.x = dState.position.x;
     shape.center.y = dState.position.y;
     shape.orientation = dState.orientation;
-    //calculateCornerPoints(shape, veh_corners);
     dState.detection.outside = !check_inlane_laneNet(shape, lane, veh_corners, box_corners);
-    //test_lane_single(laneNet[0], shape, veh_corners, box_corners, inlane_pts_num);
-    //dState.detection.outside = !check_inlane_lane_single(laneNet[1], shape, veh_corners, box_corners, inlane_pts_num);
-    /*for(i = 0; i &lt; MAXL; i++) {
-        outside[i] = !check_inlane_lane_single(laneNet[i], shape, veh_corners, box_corners, inlane_pts_num);
-    }*/
-    //dState.detection.outside = !check_inlane_lane_single(lane4, shape, veh_corners, box_corners);
     dState.detection.reach = (getDisP2P(shape.center, planning.goal) &lt;= THRESHOLD);
     if(staticObsExists) {
         for(i = 0; i &lt; MAXSO; i++) {

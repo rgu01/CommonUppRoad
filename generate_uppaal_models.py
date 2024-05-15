@@ -3,17 +3,17 @@ import sys
 import logging
 import os
 import numpy as np
-from parse_xml.utils import write_large_block
+from parseCR.utils import write_large_block
 
 
 # %% load the files and parameters
-template_file = os.path.dirname(__file__) + "/uppaal_model/template.xml"
+template_file = os.path.dirname(__file__) + "/uppaal/template.xml"
 # read template files and store lines
 with open(template_file, 'r') as template_file:
         lines = template_file.readlines()
 
 input_file_folder = os.path.dirname(__file__) + "/scenarios"
-output_file_folder = os.path.dirname(__file__) + "/uppaal_model/models"
+output_file_folder = os.path.dirname(__file__) + "/uppaal/models"
 if not os.path.exists(output_file_folder):
         os.makedirs(output_file_folder)
 

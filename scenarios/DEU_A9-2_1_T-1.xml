@@ -982,47 +982,6 @@
       </rightBound>
       <adjacentRight drivingDir="same" ref="30624"/>
    </lanelet>
-   <obstacle id="43">
-    <role>static</role>
-    <type>parkedVehicle</type>
-    <shape>
-      <rectangle>
-        <length>4.5</length>
-        <width>2.0</width>
-        <orientation>0.0</orientation>
-        <center>
-          <x>0.0</x>
-          <y>0.0</y>
-        </center>
-      </rectangle>
-    </shape>
-    <initialState>
-      <time>
-        <exact>0</exact>
-      </time>
-      <position>
-        <point>
-          <x>-15.5</x>
-          <y>-0.4</y>
-        </point>
-      </position>
-      <orientation>
-        <exact>0.02</exact>
-      </orientation>
-      <velocity>
-        <exact>0.0</exact>
-      </velocity>
-      <acceleration>
-        <exact>0.0</exact>
-      </acceleration>
-      <yawRate>
-        <exact>0.0</exact>
-      </yawRate>
-      <slipAngle>
-        <exact>0.0</exact>
-      </slipAngle>
-    </initialState>
-  </obstacle>
    <obstacle id="1">
       <role>dynamic</role>
       <type>car</type>

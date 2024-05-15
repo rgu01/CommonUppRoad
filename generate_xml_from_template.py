@@ -3,27 +3,27 @@ import sys
 import logging
 import os
 import numpy as np
-from utils import write_large_block
+from parse_xml.utils import write_large_block
 
 
 # %% load the files and parameters
-template_file = os.path.dirname(__file__) + "\\..\\uppaal_model\\template.xml"
+template_file = os.path.dirname(__file__) + "/uppaal_model/template.xml"
 # read template files and store lines
 with open(template_file, 'r') as template_file:
         lines = template_file.readlines()
 
-input_file_folder = os.path.dirname(__file__) + "\\data_xml"
-output_file_folder = os.path.dirname(__file__) + "\\..\\uppaal_model\\scenarios_xml\\Kaige0510"
+input_file_folder = os.path.dirname(__file__) + "/scenarios"
+output_file_folder = os.path.dirname(__file__) + "/uppaal_model/models"
 if not os.path.exists(output_file_folder):
         os.makedirs(output_file_folder)
 
 for xml_file in os.listdir(input_file_folder):
 
     # xml_file = "ZAM_Ramp-1_1-T-1.xml" # "ZAM_Tutorial-1_2_T-1.xml" or "DEU_Ffb-1_3_T-1.xml" or "ZAM_Ramp-1_1-T-1.xml"
-    xml_file_path = input_file_folder + "\\" + xml_file
+    xml_file_path = input_file_folder + "/" + xml_file
     file_name, _ = os.path.splitext(xml_file)
 
-    output_file = output_file_folder + "\\" + file_name + "_generated_lanelet.xml"
+    output_file = output_file_folder + "/" + file_name + "_generated_lanelet.xml"
 
     SCALE = 100 # the scaling factor from double to int
     MAXT = 10

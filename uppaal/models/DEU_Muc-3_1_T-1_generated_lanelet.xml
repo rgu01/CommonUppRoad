@@ -501,11 +501,6 @@ uint8_t pc = 0;     // policy counter
 uint8_t tc = 0;     // time counter
 ST_RECTANGLE self;
 
-// Generated trajectory starts
-//const uint8_t tLen = 3;
-//const ST_PAIR trajectory[tLen] = {{0,{{-20.0,-0.4},3.5,0.0,0.0,0.0}},{1,{{-23.5,-0.4},3.5,0.0,0.0,0.0}},{MAXTIME,{{15.0,-0.4},3.5,0.0,0.0,0.0}}};
-// Generated part ends
-
 void decisionMaking() {
     if(pc &lt; MAXTP &amp;&amp; tc == trajectory[pc].time) {
         vars.acceleration = trajectory[pc].cState.acceleration;
@@ -637,7 +632,7 @@ vars.acceleration' == 0</label>
 	</template>
 	<template>
 		<name>Controller</name>
-		<parameter>const id_t ID, const ST_CSTATE &amp;initCS, const ST_RECTANGLE &amp;shape, const ST_RULES &amp;rules</parameter>
+		<parameter>const id_t ID, const int[0,MAXL] initLane, const ST_CSTATE &amp;initCS, const ST_RECTANGLE &amp;shape, const ST_RULES &amp;rules</parameter>
 		<declaration>typedef int[0,0] BRAKE_t;    // 1 gear of brake force
 typedef int[0,0] PUSH_t;     // 1 gear of push force
 typedef int[0,1] TURN_t;     // 2 speeds of turning 
@@ -664,10 +659,6 @@ void opBrake(int gear) {
     varsEgo.acceleration = i2d(Brake[gear]);
 }
 
-/*int nextX = 0;
-int nextY = 0;
-int nextRate = 0;
-int nextOrientation = 0;*/
 void opTurn(int dir) {
     int nr = Turn[dir];
     int no = dStateEgo.orientation;
@@ -677,11 +668,6 @@ void opTurn(int dir) {
     double vy = rVelocity*sin(rOrientation);
     int nx = self.center.x + d2i(vx) * P;
     int ny = self.center.y + d2i(vy) * P;
-
-    /*nextX = nx;
-    nextY = ny;
-    nextRate = nr;
-    nextOrientation = no;*/
 
     dStateEgo.yawRate = Turn[dir];
     varsEgo.yawRate = i2d(Turn[dir]);
@@ -730,19 +716,6 @@ bool canTurn(int dir) {
     return false;
 }
 
-void initDis(ST_DSTATE &amp;dState) {
-    dState.position.x = d2i(initCS.position.x);
-    dState.position.y = d2i(initCS.position.y);
-    dState.velocity = d2i(initCS.velocity);
-    dState.orientation = d2i(initCS.orientation);
-    dState.acceleration = d2i(initCS.acceleration);
-    dState.yawRate = d2i(initCS.yawRate);
-
-    dState.detection.collide = false;
-    dState.detection.outside = false;
-    dState.detection.reach = false;
-}
-
 void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     // real numbers of the current state
     double rVelocity = 0.0, vx = 0.0, vy = 0.0;
@@ -783,10 +756,58 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     }
 }
 
+void initDis(ST_DSTATE &amp;dState) {
+    ST_DPOINT leftTop = laneNet[initLane].left.points[0];
+    ST_DPOINT rightTop = laneNet[initLane].left.points[1];
+    ST_DPOINT rightDown = laneNet[initLane].right.points[1];
+    ST_DPOINT leftDown = laneNet[initLane].right.points[0];
+    ST_DPOINT middleDStart, middleDEnd;
+    int16_t diffX = 0, diffY = 0;
+    double xs, ys, xe, ye, angle;
+
+    diffX = leftDown.x - leftTop.x;
+    diffY = leftDown.y - leftTop.y;
+    middleDStart.x = leftTop.x + diffX/2;
+    middleDStart.y = leftTop.y + diffY/2;
+    diffX = rightDown.x - rightTop.x;
+    diffY = rightDown.y - rightTop.y;
+    middleDEnd.x = rightTop.x + diffX/2;
+    middleDEnd.y = rightTop.y + diffY/2;
+    
+    xs = i2d(middleDStart.x);
+    ys = i2d(middleDStart.y);
+    xe = i2d(middleDEnd.x);
+    ye = i2d(middleDEnd.y);
+
+    angle = atan2(ye-ys,xe-xs);
+
+    dState.position = middleDStart;
+    dState.velocity = d2i(initCS.velocity);
+    dState.orientation = d2i(angle);
+    dState.acceleration = d2i(initCS.acceleration);
+    dState.yawRate = d2i(initCS.yawRate);
+
+    dState.detection.collide = false;
+    dState.detection.outside = false;
+    dState.detection.reach = false;
+}
+
 void initialize() {
     initDis(dStateEgo);
+
     self = shape;
-}</declaration>
+    self.center = dStateEgo.position;
+}
+
+
+
+
+
+
+
+
+
+</declaration>
 		<location id="id4" x="-340" y="-136">
 			<name x="-433" y="-161">Turn_Const</name>
 			<label kind="comments" x="-34" y="-51">One cannot turn and 
@@ -1065,10 +1086,12 @@ obs3 = MovingObs(3, initCS3, shapeObs3, trajectory3);
 
 // Generated moving obstacles ends
 
-const ST_CSTATE initEgo = {{-39.0, -0.4}, 3.0, 0.0, 0.0, 0.0};
-const ST_RECTANGLE shapeEgo = {{-3900, -40}, 100, 450, 0};
+// position, velocity, orientation, acceleration, yawRate
+const ST_CSTATE initEgo = {{NONE, NONE}, 3.0, 0.0, 0.0, 0.0}; 
+const ST_RECTANGLE shapeEgo = {{NONE, NONE}, 100, 450, 0};
 const ST_RULES rules = {400, 0, 20, -20}; 
-egoController = Controller(1, initEgo, shapeEgo, rules);
+const int[0,MAXL] initLane = 0;
+egoController = Controller(1, initLane, initEgo, shapeEgo, rules);
 egoDynamics = Dynamics(1, initEgo);
 
 // Generated model instances start
@@ -1134,10 +1157,26 @@ system Decisions, egoController, egoDynamics, obs1, obs2, obs3;
 		<query>
 			<formula>A[] !dStateEgo.detection.outside</formula>
 			<comment/>
+			<result outcome="failure" type="quality" timestamp="2024-05-16 09:26:33 +0200">
+				<option key="--total-runs" value="50"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--good-runs" value="20"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+			</result>
 		</query>
 		<query>
 			<formula>E[] !dStateEgo.detection.outside &amp;&amp; !dStateEgo.detection.collide</formula>
 			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-16 14:19:25 +0200">
+				<option key="--total-runs" value="50"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--good-runs" value="20"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+			</result>
 		</query>
 		<query>
 			<formula>E&lt;&gt; dStateEgo.detection.collide</formula>
@@ -1154,6 +1193,14 @@ system Decisions, egoController, egoDynamics, obs1, obs2, obs3;
 		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside</formula>
 			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-16 14:19:45 +0200">
+				<option key="--total-runs" value="50"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--good-runs" value="20"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+			</result>
 		</query>
 		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.outside</formula>

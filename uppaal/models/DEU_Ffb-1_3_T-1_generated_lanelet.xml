@@ -449,11 +449,6 @@ uint8_t pc = 0;     // policy counter
 uint8_t tc = 0;     // time counter
 ST_RECTANGLE self;
 
-// Generated trajectory starts
-//const uint8_t tLen = 3;
-//const ST_PAIR trajectory[tLen] = {{0,{{-20.0,-0.4},3.5,0.0,0.0,0.0}},{1,{{-23.5,-0.4},3.5,0.0,0.0,0.0}},{MAXTIME,{{15.0,-0.4},3.5,0.0,0.0,0.0}}};
-// Generated part ends
-
 void decisionMaking() {
     if(pc &lt; MAXTP &amp;&amp; tc == trajectory[pc].time) {
         vars.acceleration = trajectory[pc].cState.acceleration;
@@ -585,7 +580,7 @@ vars.acceleration' == 0</label>
 	</template>
 	<template>
 		<name>Controller</name>
-		<parameter>const id_t ID, const ST_CSTATE &amp;initCS, const ST_RECTANGLE &amp;shape, const ST_RULES &amp;rules</parameter>
+		<parameter>const id_t ID, const int[0,MAXL] initLane, const ST_CSTATE &amp;initCS, const ST_RECTANGLE &amp;shape, const ST_RULES &amp;rules</parameter>
 		<declaration>typedef int[0,0] BRAKE_t;    // 1 gear of brake force
 typedef int[0,0] PUSH_t;     // 1 gear of push force
 typedef int[0,1] TURN_t;     // 2 speeds of turning 
@@ -612,10 +607,6 @@ void opBrake(int gear) {
     varsEgo.acceleration = i2d(Brake[gear]);
 }
 
-/*int nextX = 0;
-int nextY = 0;
-int nextRate = 0;
-int nextOrientation = 0;*/
 void opTurn(int dir) {
     int nr = Turn[dir];
     int no = dStateEgo.orientation;
@@ -625,11 +616,6 @@ void opTurn(int dir) {
     double vy = rVelocity*sin(rOrientation);
     int nx = self.center.x + d2i(vx) * P;
     int ny = self.center.y + d2i(vy) * P;
-
-    /*nextX = nx;
-    nextY = ny;
-    nextRate = nr;
-    nextOrientation = no;*/
 
     dStateEgo.yawRate = Turn[dir];
     varsEgo.yawRate = i2d(Turn[dir]);
@@ -678,19 +664,6 @@ bool canTurn(int dir) {
     return false;
 }
 
-void initDis(ST_DSTATE &amp;dState) {
-    dState.position.x = d2i(initCS.position.x);
-    dState.position.y = d2i(initCS.position.y);
-    dState.velocity = d2i(initCS.velocity);
-    dState.orientation = d2i(initCS.orientation);
-    dState.acceleration = d2i(initCS.acceleration);
-    dState.yawRate = d2i(initCS.yawRate);
-
-    dState.detection.collide = false;
-    dState.detection.outside = false;
-    dState.detection.reach = false;
-}
-
 void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     // real numbers of the current state
     double rVelocity = 0.0, vx = 0.0, vy = 0.0;
@@ -731,10 +704,58 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     }
 }
 
+void initDis(ST_DSTATE &amp;dState) {
+    ST_DPOINT leftTop = laneNet[initLane].left.points[0];
+    ST_DPOINT rightTop = laneNet[initLane].left.points[1];
+    ST_DPOINT rightDown = laneNet[initLane].right.points[1];
+    ST_DPOINT leftDown = laneNet[initLane].right.points[0];
+    ST_DPOINT middleDStart, middleDEnd;
+    int16_t diffX = 0, diffY = 0;
+    double xs, ys, xe, ye, angle;
+
+    diffX = leftDown.x - leftTop.x;
+    diffY = leftDown.y - leftTop.y;
+    middleDStart.x = leftTop.x + diffX/2;
+    middleDStart.y = leftTop.y + diffY/2;
+    diffX = rightDown.x - rightTop.x;
+    diffY = rightDown.y - rightTop.y;
+    middleDEnd.x = rightTop.x + diffX/2;
+    middleDEnd.y = rightTop.y + diffY/2;
+    
+    xs = i2d(middleDStart.x);
+    ys = i2d(middleDStart.y);
+    xe = i2d(middleDEnd.x);
+    ye = i2d(middleDEnd.y);
+
+    angle = atan2(ye-ys,xe-xs);
+
+    dState.position = middleDStart;
+    dState.velocity = d2i(initCS.velocity);
+    dState.orientation = d2i(angle);
+    dState.acceleration = d2i(initCS.acceleration);
+    dState.yawRate = d2i(initCS.yawRate);
+
+    dState.detection.collide = false;
+    dState.detection.outside = false;
+    dState.detection.reach = false;
+}
+
 void initialize() {
     initDis(dStateEgo);
+
     self = shape;
-}</declaration>
+    self.center = dStateEgo.position;
+}
+
+
+
+
+
+
+
+
+
+</declaration>
 		<location id="id4" x="-340" y="-136">
 			<name x="-433" y="-161">Turn_Const</name>
 			<label kind="comments" x="-34" y="-51">One cannot turn and 
@@ -1001,7 +1022,7 @@ const ST_CSTATE initCS200 = {{25.8871, -0.3377}, 0.0, 0.0, 0.0, 0.0};
 const ST_RECTANGLE shapeObs200 = {{2588, -33}, 200, 480, 0};
 const ST_PAIR PHOLDER = {NONE,{{NONE,NONE},NONE,NONE,NONE,NONE}};
 const ST_PAIR trajectory200[MAXTP] = {{1, {{26.8981, -0.46477}, 10.0, 0.029074, 0, 0}}, {2, {{27.8977, -0.4357}, 10.0, 0.029074, 0, 0}}, {3, {{28.8973, -0.40663}, 10.0, 0.029074, 0, 0}}, {4, {{29.8969, -0.37756}, 10.0, 0.029074, 0, 0}}, {5, {{30.8964, -0.34849}, 10.0, 0.029074, 0, 0}}, {6, {{31.896, -0.31942}, 10.0, 0.029074, 0, 0}}, {7, {{32.8956, -0.29035}, 10.0, 0.029074, 0, 0}}, {8, {{33.8952, -0.26128}, 10.0, 0.029074, 0, 0}}, {9, {{34.8948, -0.23221}, 10.0, 0.029074, 0, 0}}, {10, {{35.8943, -0.20314}, 10.0, 0.029074, 0, 0}}, {11, {{36.8939, -0.17408}, 10.0, 0.029074, 0, 0}}, {12, {{37.8935, -0.14501}, 10.0, 0.029074, 0, 0}}, {13, {{38.8931, -0.11594}, 10.0, 0.029074, 0, 0}}, {14, {{39.8926, -0.08687}, 10.0, 0.029074, 0, 0}}, {15, {{40.8922, -0.0578}, 10.0, 0.029074, 0, 0}}, {16, {{41.8918, -0.02873}, 10.0, 0.029074, 0, 0}}, {17, {{42.8914, 0.00034}, 10.0, 0.029074, 0, 0}}, {18, {{43.891, 0.02941}, 10.0, 0.029074, 0, 0}}, {19, {{44.8905, 0.05848}, 10.0, 0.029074, 0, 0}}, {20, {{45.8901, 0.08755}, 10.0, 0.029074, 0, 0}}, {21, {{46.8897, 0.11662}, 10.0, 0.029074, 0, 0}}, {22, {{47.8893, 0.14569}, 10.0, 0.029074, 0, 0}}, {23, {{48.8889, 0.17243}, 10.0, 0.025433, 0, 0}}, {24, {{49.8886, 0.19786}, 10.0, 0.025433, 0, 0}}, {25, {{50.8883, 0.22329}, 10.0, 0.025433, 0, 0}}, {26, {{51.8879, 0.24872}, 10.0, 0.025433, 0, 0}}, {27, {{52.8876, 0.27415}, 10.0, 0.025433, 0, 0}}, {28, {{53.8873, 0.29958}, 10.0, 0.025433, 0, 0}}, {29, {{54.887, 0.32501}, 10.0, 0.025433, 0, 0}}, {30, {{55.8865, 0.35552}, 10.0, 0.046131, 0, 0}}, {31, {{56.8854, 0.40163}, 10.0, 0.046131, 0, 0}}, {32, {{57.8843, 0.44775}, 10.0, 0.046131, 0, 0}}, {33, {{58.8838, 0.47272}, 10.0, 0.0086253, 0, 0}}, {34, {{59.8828, 0.46449}, 10.0, -0.12497, 0, 0}}, {35, {{60.875, 0.33984}, 10.0, -0.12497, 0, 0}}, {36, {{61.8642, 0.19381}, 10.0, -0.15906, 0, 0}}, {37, {{62.8212, -0.05546}, 10.0, -0.48525, 0, 0}}, {38, {{63.7058, -0.52189}, 10.0, -0.48525, 0, 0}}, {39, {{64.566, -1.0192}, 10.0, -0.84926, 0, 0}}, {40, {{65.2358, -1.7615}, 10.0, -0.8116, 0, 0}}, {41, {{65.8766, -2.5276}, 10.0, -0.91334, 0, 0}}, {42, {{66.4206, -3.3597}, 10.0, -1.3067, 0, 0}}, {43, {{66.6816, -4.325}, 10.0, -1.3067, 0, 0}}, {44, {{66.8852, -5.3012}, 10.0, -1.4621, 0, 0}}, {45, {{66.9937, -6.2953}, 10.0, -1.4621, 0, 0}}, {46, {{67.1021, -7.2894}, 10.0, -1.4621, 0, 0}}, {47, {{67.2106, -8.2835}, 10.0, -1.4621, 0, 0}}, {48, {{67.2678, -9.2794}, 10.0, -1.6101, 0, 0}}, {49, {{67.2284, -10.2786}, 10.0, -1.6101, 0, 0}}, {50, {{67.1891, -11.2778}, 10.0, -1.6101, 0, 0}}};
-obs200 = MovingObs(200, initCS200, shapeObs200, trajectory200);
+obs1 = MovingObs(200, initCS200, shapeObs200, trajectory200);
 const ST_CSTATE initCS201 = {{70.9731, -14.1012}, 1.5219, 1.5219, 0.0, 0.0};
 const ST_RECTANGLE shapeObs201 = {{7097, -1410}, 200, 480, 0};
 const ST_PAIR trajectory201[MAXTP] = {{1, {{70.6301, -12.8984}, 12.0, 1.5175, 0, 0}}, {2, {{70.694, -11.7001}, 12.0, 1.5175, 0, 0}}, {3, {{70.758, -10.5019}, 12.0, 1.5175, 0, 0}}, {4, {{70.822, -9.3036}, 12.0, 1.5175, 0, 0}}, {5, {{70.9164, -8.1073}, 12.0, 1.4919, 0, 0}}, {6, {{71.0207, -6.9119}, 12.0, 1.4673, 0, 0}}, {7, {{71.1534, -5.7193}, 12.0, 1.4344, 0, 0}}, {8, {{71.3349, -4.5333}, 12.0, 1.4003, 0, 0}}, {9, {{71.5829, -3.3606}, 12.0, 1.3009, 0, 0}}, {10, {{71.9205, -2.2097}, 12.0, 1.2161, 0, 0}}, {11, {{72.3666, -1.0969}, 12.0, 1.1214, 0, 0}}, {12, {{72.9225, -0.03516}, 12.0, 0.97499, 0, 0}}, {13, {{73.6433, 0.92107}, 12.0, 0.75411, 0, 0}}, {14, {{74.5179, 1.7426}, 12.0, 0.75411, 0, 0}}, {15, {{75.5112, 2.4144}, 12.0, 0.58528, 0, 0}}, {16, {{76.5337, 3.0418}, 12.0, 0.53328, 0, 0}}, {17, {{77.6469, 3.4726}, 12.0, 0.25286, 0, 0}}, {18, {{78.8088, 3.7728}, 12.0, 0.25286, 0, 0}}, {19, {{79.9834, 4.0118}, 12.0, 0.15909, 0, 0}}, {20, {{81.1682, 4.2019}, 12.0, 0.15909, 0, 0}}, {21, {{82.3582, 4.2696}, 12.0, -0.076203, 0, 0}}, {22, {{83.5547, 4.1783}, 12.0, -0.076203, 0, 0}}, {23, {{84.7512, 4.0869}, 12.0, -0.076203, 0, 0}}, {24, {{85.9477, 3.9956}, 12.0, -0.076203, 0, 0}}, {25, {{87.1442, 3.9042}, 12.0, -0.076203, 0, 0}}, {26, {{88.3407, 3.8129}, 12.0, -0.076203, 0, 0}}, {27, {{89.5373, 3.7215}, 12.0, -0.076203, 0, 0}}, {28, {{90.7338, 3.6301}, 12.0, -0.076203, 0, 0}}, {29, {{91.9303, 3.5388}, 12.0, -0.076203, 0, 0}}, {30, {{93.1268, 3.4474}, 12.0, -0.076203, 0, 0}}, {31, {{94.3233, 3.3561}, 12.0, -0.076203, 0, 0}}, {32, {{95.5199, 3.2657}, 12.0, -0.074688, 0, 0}}, {33, {{96.7153, 3.1614}, 12.0, -0.091472, 0, 0}}, {34, {{97.9103, 3.0518}, 12.0, -0.091472, 0, 0}}, {35, {{99.1053, 2.9422}, 12.0, -0.091472, 0, 0}}, {36, {{100.3003, 2.8325}, 12.0, -0.091472, 0, 0}}, {37, {{101.4953, 2.7229}, 12.0, -0.091472, 0, 0}}, {38, {{102.6903, 2.6133}, 12.0, -0.091472, 0, 0}}, {39, {{103.8852, 2.5037}, 12.0, -0.091472, 0, 0}}, {40, {{105.0802, 2.3941}, 12.0, -0.091472, 0, 0}}, {41, {{106.2752, 2.2845}, 12.0, -0.091472, 0, 0}}, {42, {{107.4702, 2.1749}, 12.0, -0.091472, 0, 0}}, {43, {{108.6652, 2.0652}, 12.0, -0.091472, 0, 0}}, {44, {{109.8602, 1.9556}, 12.0, -0.091472, 0, 0}}, {45, {{111.0551, 1.846}, 12.0, -0.091472, 0, 0}}, {46, {{112.2501, 1.7364}, 12.0, -0.091472, 0, 0}}, {47, {{113.4451, 1.6268}, 12.0, -0.091472, 0, 0}}, {48, {{114.6388, 1.5051}, 12.0, -0.1292, 0, 0}}, {49, {{115.8288, 1.3505}, 12.0, -0.1292, 0, 0}}, {50, {{117.0188, 1.1959}, 12.0, -0.1292, 0, 0}}};
@@ -1018,14 +1039,15 @@ obs203 = MovingObs(203, initCS203, shapeObs203, trajectory203);
 // Generated moving obstacles ends
 
 // position, velocity, orientation, acceleration, yawRate
-const ST_CSTATE initEgo = {{55.48, -186.11}, 3.0, 0.0, 0.0, 0.0}; 
-const ST_RECTANGLE shapeEgo = {{5548, -18611}, 100, 450, 0};
+const ST_CSTATE initEgo = {{NONE, NONE}, 3.0, 0.0, 0.0, 0.0}; 
+const ST_RECTANGLE shapeEgo = {{NONE, NONE}, 100, 450, 0};
 const ST_RULES rules = {400, 0, 20, -20}; 
-egoController = Controller(1, initEgo, shapeEgo, rules);
+const int[0,MAXL] initLane = 0;
+egoController = Controller(1, initLane, initEgo, shapeEgo, rules);
 egoDynamics = Dynamics(1, initEgo);
 
 // Generated model instances start
-system Decisions, egoController, egoDynamics, obs200, obs201, obs202, obs203;
+system Decisions, egoController, egoDynamics, obs1, obs201, obs202, obs203;
 
 // Generated model instances end
 </system>
@@ -1099,7 +1121,7 @@ system Decisions, egoController, egoDynamics, obs200, obs201, obs202, obs203;
 		<query>
 			<formula>E[] !dStateEgo.detection.outside &amp;&amp; !dStateEgo.detection.collide</formula>
 			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-05-16 09:26:18 +0200">
+			<result outcome="success" type="quality" timestamp="2024-05-16 14:19:25 +0200">
 				<option key="--total-runs" value="50"/>
 				<option key="--max-iterations" value="3"/>
 				<option key="--good-runs" value="20"/>
@@ -1123,7 +1145,7 @@ system Decisions, egoController, egoDynamics, obs200, obs201, obs202, obs203;
 		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside</formula>
 			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-05-16 09:26:10 +0200">
+			<result outcome="success" type="quality" timestamp="2024-05-16 14:19:45 +0200">
 				<option key="--total-runs" value="50"/>
 				<option key="--max-iterations" value="3"/>
 				<option key="--good-runs" value="20"/>

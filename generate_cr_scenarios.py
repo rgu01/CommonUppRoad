@@ -55,7 +55,7 @@ def make_dynamic_obstacle(obstacle_id, data, w=1.8, l=4.3):
 
 # deifne variables for parsing
 root = os.path.dirname(__file__)
-SCENARIO_PATH = root + '/scenarios/DEU_Ffb-1_3_T-1.xml'
+SCENARIO_PATH = root + '/scenarios/ZAM_Tutorial-1_2_T-1.xml'
 SAMPLING_LOG_PATH = root + '/uppaal/sampling.log'
 N_OBS_STATES = 5
 N_NEW_OBS = 0

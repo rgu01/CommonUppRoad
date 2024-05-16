@@ -194,10 +194,11 @@ const ST_PLANNING planning = {{6976, 1952}};
 
 broadcast chan chooseEgo, chooseObs, begin, update;
 
-ST_DSTATE dStateEgo;
+ST_DSTATE dStateEgo;       // discrete variables
 ST_VARIABLES varsEgo;      // continuous variables
-hybrid clock D;         /// "cost" of distance used in strategy optimization
-clock time;             // global time
+ST_RECTANGLE shapeEgo;     // shape of ego vehicle
+hybrid clock D;            /// "cost" of distance used in strategy optimization
+clock time;                // global time
 
 double i2d(const int32_t i) {
     double v = i/SCALE;
@@ -442,8 +443,7 @@ bool check_collision(ST_RECTANGLE veh_st_rect1, ST_RECTANGLE veh_st_rect2, int d
 	<template>
 		<name x="5" y="5">MovingObs</name>
 		<parameter>const id_t ID, const ST_CSTATE &amp;initCS, const ST_RECTANGLE &amp;shape, const ST_PAIR trajectory[MAXTP]</parameter>
-		<declaration>// Place local declarations here.
-ST_VARIABLES vars;  // continuous variables
+		<declaration>ST_VARIABLES vars;  // continuous variables
 ST_DSTATE dState;   // discrete state
 uint8_t pc = 0;     // policy counter
 uint8_t tc = 0;     // time counter
@@ -519,6 +519,9 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     shape.center.x = dState.position.x;
     shape.center.y = dState.position.y;
     shape.orientation = dState.orientation;
+
+    dStateEgo.detection.collide |= check_collision(shapeEgo, shape, THRESHOLD);
+    dState.detection.collide = dStateEgo.detection.collide;
 }
 
 void updateCon(ST_VARIABLES &amp;vars) {
@@ -590,8 +593,6 @@ const int8_t Push[3] = {d2i(0.1), d2i(0.2), d2i(0.3)};
 const int8_t Turn[2] = {d2i(0.1), d2i(-0.1)};
 const bool CONSTANTSPEED = true;
 
-ST_RECTANGLE self;
-
 void opConst() {
     dStateEgo.acceleration = 0;
     varsEgo.acceleration = 0;
@@ -614,8 +615,8 @@ void opTurn(int dir) {
     double rOrientation = i2d(no);
     double vx = rVelocity*cos(rOrientation);
     double vy = rVelocity*sin(rOrientation);
-    int nx = self.center.x + d2i(vx) * P;
-    int ny = self.center.y + d2i(vy) * P;
+    int nx = shapeEgo.center.x + d2i(vx) * P;
+    int ny = shapeEgo.center.y + d2i(vy) * P;
 
     dStateEgo.yawRate = Turn[dir];
     varsEgo.yawRate = i2d(Turn[dir]);
@@ -653,8 +654,8 @@ bool canTurn(int dir) {
     ST_DPOINT box_corners[4];
     bool outroad = false;
 
-    nextShape.center.x = self.center.x + d2i(vx) * P;
-    nextShape.center.y = self.center.y + d2i(vy) * P;
+    nextShape.center.x = shapeEgo.center.x + d2i(vx) * P;
+    nextShape.center.y = shapeEgo.center.y + d2i(vy) * P;
     nextShape.orientation = nextOrientation;
     outroad = !check_inlane_laneNet(nextShape, lane, veh_corners, box_corners);
 
@@ -742,9 +743,8 @@ void initDis(ST_DSTATE &amp;dState) {
 
 void initialize() {
     initDis(dStateEgo);
-
-    self = shape;
-    self.center = dStateEgo.position;
+    shapeEgo = shape;
+    shapeEgo.center = dStateEgo.position;
 }
 
 
@@ -805,7 +805,7 @@ simutaneously.</label>
 			<source ref="id8"/>
 			<target ref="id8"/>
 			<label kind="synchronisation" x="-306" y="144">update?</label>
-			<label kind="assignment" x="-306" y="161">updateDis(dStateEgo,self)</label>
+			<label kind="assignment" x="-306" y="161">updateDis(dStateEgo,shapeEgo)</label>
 			<nail x="-331" y="170"/>
 			<nail x="-306" y="170"/>
 		</transition>
@@ -813,7 +813,7 @@ simutaneously.</label>
 			<source ref="id5"/>
 			<target ref="id5"/>
 			<label kind="synchronisation" x="-25" y="93">update?</label>
-			<label kind="assignment" x="-25" y="119">updateDis(dStateEgo,self)</label>
+			<label kind="assignment" x="-25" y="119">updateDis(dStateEgo,shapeEgo)</label>
 			<nail x="-34" y="102"/>
 			<nail x="-34" y="136"/>
 		</transition>
@@ -821,7 +821,7 @@ simutaneously.</label>
 			<source ref="id6"/>
 			<target ref="id6"/>
 			<label kind="synchronisation" x="-42" y="-144">update?</label>
-			<label kind="assignment" x="-42" y="-127">updateDis(dStateEgo,self)</label>
+			<label kind="assignment" x="-42" y="-127">updateDis(dStateEgo,shapeEgo)</label>
 			<nail x="-34" y="-136"/>
 			<nail x="-34" y="-102"/>
 		</transition>
@@ -829,7 +829,7 @@ simutaneously.</label>
 			<source ref="id4"/>
 			<target ref="id4"/>
 			<label kind="synchronisation" x="-314" y="-187">update?</label>
-			<label kind="assignment" x="-314" y="-170">updateDis(dStateEgo,self)</label>
+			<label kind="assignment" x="-314" y="-170">updateDis(dStateEgo,shapeEgo)</label>
 			<nail x="-306" y="-170"/>
 			<nail x="-340" y="-170"/>
 		</transition>
@@ -966,12 +966,36 @@ counter!=MAXTIME</label>
 	</template>
 	<template>
 		<name>Dynamics</name>
-		<parameter>const id_t ID, const ST_CSTATE &amp;initCS</parameter>
+		<parameter>const id_t ID, const int[0,MAXL] initLane, const ST_CSTATE &amp;initCS</parameter>
 		<declaration>void initCon(ST_VARIABLES &amp;vars) {
-    vars.x = initCS.position.x;
-    vars.y = initCS.position.y;
+    ST_DPOINT leftTop = laneNet[initLane].left.points[0];
+    ST_DPOINT rightTop = laneNet[initLane].left.points[1];
+    ST_DPOINT rightDown = laneNet[initLane].right.points[1];
+    ST_DPOINT leftDown = laneNet[initLane].right.points[0];
+    ST_DPOINT middleDStart, middleDEnd;
+    int16_t diffX = 0, diffY = 0;
+    double xs, ys, xe, ye, angle;
+
+    diffX = leftDown.x - leftTop.x;
+    diffY = leftDown.y - leftTop.y;
+    middleDStart.x = leftTop.x + diffX/2;
+    middleDStart.y = leftTop.y + diffY/2;
+    diffX = rightDown.x - rightTop.x;
+    diffY = rightDown.y - rightTop.y;
+    middleDEnd.x = rightTop.x + diffX/2;
+    middleDEnd.y = rightTop.y + diffY/2;
+    
+    xs = i2d(middleDStart.x);
+    ys = i2d(middleDStart.y);
+    xe = i2d(middleDEnd.x);
+    ye = i2d(middleDEnd.y);
+
+    angle = atan2(ye-ys,xe-xs);
+
+    vars.x = i2d(middleDStart.x);
+    vars.y = i2d(middleDStart.y);
     vars.velocity = initCS.velocity;
-    vars.orientation = initCS.orientation;
+    vars.orientation = angle;
     vars.acceleration = initCS.acceleration;
     vars.yawRate = initCS.yawRate;
 
@@ -1022,7 +1046,7 @@ const ST_CSTATE initCS200 = {{25.8871, -0.3377}, 0.0, 0.0, 0.0, 0.0};
 const ST_RECTANGLE shapeObs200 = {{2588, -33}, 200, 480, 0};
 const ST_PAIR PHOLDER = {NONE,{{NONE,NONE},NONE,NONE,NONE,NONE}};
 const ST_PAIR trajectory200[MAXTP] = {{1, {{26.8981, -0.46477}, 10.0, 0.029074, 0, 0}}, {2, {{27.8977, -0.4357}, 10.0, 0.029074, 0, 0}}, {3, {{28.8973, -0.40663}, 10.0, 0.029074, 0, 0}}, {4, {{29.8969, -0.37756}, 10.0, 0.029074, 0, 0}}, {5, {{30.8964, -0.34849}, 10.0, 0.029074, 0, 0}}, {6, {{31.896, -0.31942}, 10.0, 0.029074, 0, 0}}, {7, {{32.8956, -0.29035}, 10.0, 0.029074, 0, 0}}, {8, {{33.8952, -0.26128}, 10.0, 0.029074, 0, 0}}, {9, {{34.8948, -0.23221}, 10.0, 0.029074, 0, 0}}, {10, {{35.8943, -0.20314}, 10.0, 0.029074, 0, 0}}, {11, {{36.8939, -0.17408}, 10.0, 0.029074, 0, 0}}, {12, {{37.8935, -0.14501}, 10.0, 0.029074, 0, 0}}, {13, {{38.8931, -0.11594}, 10.0, 0.029074, 0, 0}}, {14, {{39.8926, -0.08687}, 10.0, 0.029074, 0, 0}}, {15, {{40.8922, -0.0578}, 10.0, 0.029074, 0, 0}}, {16, {{41.8918, -0.02873}, 10.0, 0.029074, 0, 0}}, {17, {{42.8914, 0.00034}, 10.0, 0.029074, 0, 0}}, {18, {{43.891, 0.02941}, 10.0, 0.029074, 0, 0}}, {19, {{44.8905, 0.05848}, 10.0, 0.029074, 0, 0}}, {20, {{45.8901, 0.08755}, 10.0, 0.029074, 0, 0}}, {21, {{46.8897, 0.11662}, 10.0, 0.029074, 0, 0}}, {22, {{47.8893, 0.14569}, 10.0, 0.029074, 0, 0}}, {23, {{48.8889, 0.17243}, 10.0, 0.025433, 0, 0}}, {24, {{49.8886, 0.19786}, 10.0, 0.025433, 0, 0}}, {25, {{50.8883, 0.22329}, 10.0, 0.025433, 0, 0}}, {26, {{51.8879, 0.24872}, 10.0, 0.025433, 0, 0}}, {27, {{52.8876, 0.27415}, 10.0, 0.025433, 0, 0}}, {28, {{53.8873, 0.29958}, 10.0, 0.025433, 0, 0}}, {29, {{54.887, 0.32501}, 10.0, 0.025433, 0, 0}}, {30, {{55.8865, 0.35552}, 10.0, 0.046131, 0, 0}}, {31, {{56.8854, 0.40163}, 10.0, 0.046131, 0, 0}}, {32, {{57.8843, 0.44775}, 10.0, 0.046131, 0, 0}}, {33, {{58.8838, 0.47272}, 10.0, 0.0086253, 0, 0}}, {34, {{59.8828, 0.46449}, 10.0, -0.12497, 0, 0}}, {35, {{60.875, 0.33984}, 10.0, -0.12497, 0, 0}}, {36, {{61.8642, 0.19381}, 10.0, -0.15906, 0, 0}}, {37, {{62.8212, -0.05546}, 10.0, -0.48525, 0, 0}}, {38, {{63.7058, -0.52189}, 10.0, -0.48525, 0, 0}}, {39, {{64.566, -1.0192}, 10.0, -0.84926, 0, 0}}, {40, {{65.2358, -1.7615}, 10.0, -0.8116, 0, 0}}, {41, {{65.8766, -2.5276}, 10.0, -0.91334, 0, 0}}, {42, {{66.4206, -3.3597}, 10.0, -1.3067, 0, 0}}, {43, {{66.6816, -4.325}, 10.0, -1.3067, 0, 0}}, {44, {{66.8852, -5.3012}, 10.0, -1.4621, 0, 0}}, {45, {{66.9937, -6.2953}, 10.0, -1.4621, 0, 0}}, {46, {{67.1021, -7.2894}, 10.0, -1.4621, 0, 0}}, {47, {{67.2106, -8.2835}, 10.0, -1.4621, 0, 0}}, {48, {{67.2678, -9.2794}, 10.0, -1.6101, 0, 0}}, {49, {{67.2284, -10.2786}, 10.0, -1.6101, 0, 0}}, {50, {{67.1891, -11.2778}, 10.0, -1.6101, 0, 0}}};
-obs1 = MovingObs(200, initCS200, shapeObs200, trajectory200);
+obs200 = MovingObs(200, initCS200, shapeObs200, trajectory200);
 const ST_CSTATE initCS201 = {{70.9731, -14.1012}, 1.5219, 1.5219, 0.0, 0.0};
 const ST_RECTANGLE shapeObs201 = {{7097, -1410}, 200, 480, 0};
 const ST_PAIR trajectory201[MAXTP] = {{1, {{70.6301, -12.8984}, 12.0, 1.5175, 0, 0}}, {2, {{70.694, -11.7001}, 12.0, 1.5175, 0, 0}}, {3, {{70.758, -10.5019}, 12.0, 1.5175, 0, 0}}, {4, {{70.822, -9.3036}, 12.0, 1.5175, 0, 0}}, {5, {{70.9164, -8.1073}, 12.0, 1.4919, 0, 0}}, {6, {{71.0207, -6.9119}, 12.0, 1.4673, 0, 0}}, {7, {{71.1534, -5.7193}, 12.0, 1.4344, 0, 0}}, {8, {{71.3349, -4.5333}, 12.0, 1.4003, 0, 0}}, {9, {{71.5829, -3.3606}, 12.0, 1.3009, 0, 0}}, {10, {{71.9205, -2.2097}, 12.0, 1.2161, 0, 0}}, {11, {{72.3666, -1.0969}, 12.0, 1.1214, 0, 0}}, {12, {{72.9225, -0.03516}, 12.0, 0.97499, 0, 0}}, {13, {{73.6433, 0.92107}, 12.0, 0.75411, 0, 0}}, {14, {{74.5179, 1.7426}, 12.0, 0.75411, 0, 0}}, {15, {{75.5112, 2.4144}, 12.0, 0.58528, 0, 0}}, {16, {{76.5337, 3.0418}, 12.0, 0.53328, 0, 0}}, {17, {{77.6469, 3.4726}, 12.0, 0.25286, 0, 0}}, {18, {{78.8088, 3.7728}, 12.0, 0.25286, 0, 0}}, {19, {{79.9834, 4.0118}, 12.0, 0.15909, 0, 0}}, {20, {{81.1682, 4.2019}, 12.0, 0.15909, 0, 0}}, {21, {{82.3582, 4.2696}, 12.0, -0.076203, 0, 0}}, {22, {{83.5547, 4.1783}, 12.0, -0.076203, 0, 0}}, {23, {{84.7512, 4.0869}, 12.0, -0.076203, 0, 0}}, {24, {{85.9477, 3.9956}, 12.0, -0.076203, 0, 0}}, {25, {{87.1442, 3.9042}, 12.0, -0.076203, 0, 0}}, {26, {{88.3407, 3.8129}, 12.0, -0.076203, 0, 0}}, {27, {{89.5373, 3.7215}, 12.0, -0.076203, 0, 0}}, {28, {{90.7338, 3.6301}, 12.0, -0.076203, 0, 0}}, {29, {{91.9303, 3.5388}, 12.0, -0.076203, 0, 0}}, {30, {{93.1268, 3.4474}, 12.0, -0.076203, 0, 0}}, {31, {{94.3233, 3.3561}, 12.0, -0.076203, 0, 0}}, {32, {{95.5199, 3.2657}, 12.0, -0.074688, 0, 0}}, {33, {{96.7153, 3.1614}, 12.0, -0.091472, 0, 0}}, {34, {{97.9103, 3.0518}, 12.0, -0.091472, 0, 0}}, {35, {{99.1053, 2.9422}, 12.0, -0.091472, 0, 0}}, {36, {{100.3003, 2.8325}, 12.0, -0.091472, 0, 0}}, {37, {{101.4953, 2.7229}, 12.0, -0.091472, 0, 0}}, {38, {{102.6903, 2.6133}, 12.0, -0.091472, 0, 0}}, {39, {{103.8852, 2.5037}, 12.0, -0.091472, 0, 0}}, {40, {{105.0802, 2.3941}, 12.0, -0.091472, 0, 0}}, {41, {{106.2752, 2.2845}, 12.0, -0.091472, 0, 0}}, {42, {{107.4702, 2.1749}, 12.0, -0.091472, 0, 0}}, {43, {{108.6652, 2.0652}, 12.0, -0.091472, 0, 0}}, {44, {{109.8602, 1.9556}, 12.0, -0.091472, 0, 0}}, {45, {{111.0551, 1.846}, 12.0, -0.091472, 0, 0}}, {46, {{112.2501, 1.7364}, 12.0, -0.091472, 0, 0}}, {47, {{113.4451, 1.6268}, 12.0, -0.091472, 0, 0}}, {48, {{114.6388, 1.5051}, 12.0, -0.1292, 0, 0}}, {49, {{115.8288, 1.3505}, 12.0, -0.1292, 0, 0}}, {50, {{117.0188, 1.1959}, 12.0, -0.1292, 0, 0}}};
@@ -1040,14 +1064,14 @@ obs203 = MovingObs(203, initCS203, shapeObs203, trajectory203);
 
 // position, velocity, orientation, acceleration, yawRate
 const ST_CSTATE initEgo = {{NONE, NONE}, 3.0, 0.0, 0.0, 0.0}; 
-const ST_RECTANGLE shapeEgo = {{NONE, NONE}, 100, 450, 0};
+const ST_RECTANGLE initShapeEgo = {{NONE, NONE}, 100, 450, 0};
 const ST_RULES rules = {400, 0, 20, -20}; 
 const int[0,MAXL] initLane = 0;
-egoController = Controller(1, initLane, initEgo, shapeEgo, rules);
-egoDynamics = Dynamics(1, initEgo);
+egoController = Controller(1, initLane, initEgo, initShapeEgo, rules);
+egoDynamics = Dynamics(1, initLane, initEgo);
 
 // Generated model instances start
-system Decisions, egoController, egoDynamics, obs1, obs201, obs202, obs203;
+system Decisions, egoController, egoDynamics, obs200, obs201, obs202, obs203;
 
 // Generated model instances end
 </system>
@@ -1059,203 +1083,16 @@ system Decisions, egoController, egoDynamics, obs1, obs201, obs202, obs203;
 		<option key="--runs-pr-state" value="10"/>
 		<option key="--diagnostic" value="0"/>
 		<query>
-			<formula>simulate [&lt;=MAXTIME] { obs1.vars.x, obs1.vars.y }</formula>
+			<formula>strategy safe = control:A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside
+</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=MAXTIME] { obs1.vars.velocity, obs1.vars.orientation, obs1.vars.yawRate, obs1.vars.acceleration }</formula>
+			<formula>strategy reachSafe = minE(D) [&lt;=MAXTIME] {egoController.location}-&gt;{dStateEgo.position.x, dStateEgo.position.y, dStateEgo.velocity, dStateEgo.orientation, dStateEgo.acceleration, dStateEgo.yawRate}: &lt;&gt; time&gt;=MAXTIME under safe</formula>
 			<comment/>
 		</query>
 		<query>
-			<formula>simulate [&lt;=MAXTIME] { obs1.vars.acceleration, i2d(obs1.dState.acceleration) }</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>simulate [&lt;=MAXTIME] { obs1.vars.yawRate, i2d(obs1.dState.yawRate) }</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>simulate [&lt;=MAXTIME] { obs1.vars.velocity, i2d(obs1.dState.velocity) }</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>simulate [&lt;=MAXTIME] { obs1.vars.orientation, i2d(obs1.dState.orientation) }</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>simulate [&lt;=MAXTIME] { obs1.vars.x, i2d(obs1.dState.position.x), obs1.vars.y, i2d(obs1.dState.position.y) }</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>simulate [&lt;=MAXTIME;100] { sqrt(pow(obs1.vars.x-i2d(obs1.dState.position.x),2) + pow(obs1.vars.y-i2d(obs1.dState.position.y),2)) }</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula/>
-			<comment>//</comment>
-		</query>
-		<query>
-			<formula>simulate [&lt;=MAXTIME;100] { varsEgo.x-i2d(dStateEgo.position.x), varsEgo.y-i2d(dStateEgo.position.y) }</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula/>
-			<comment>//</comment>
-		</query>
-		<query>
-			<formula>A[] !dStateEgo.detection.collide</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>A[] !dStateEgo.detection.outside</formula>
-			<comment/>
-			<result outcome="failure" type="quality" timestamp="2024-05-16 09:26:33 +0200">
-				<option key="--total-runs" value="50"/>
-				<option key="--max-iterations" value="3"/>
-				<option key="--good-runs" value="20"/>
-				<option key="--eval-runs" value="10"/>
-				<option key="--runs-pr-state" value="10"/>
-				<option key="--diagnostic" value="0"/>
-			</result>
-		</query>
-		<query>
-			<formula>E[] !dStateEgo.detection.outside &amp;&amp; !dStateEgo.detection.collide</formula>
-			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-16 14:19:25 +0200">
-				<option key="--total-runs" value="50"/>
-				<option key="--max-iterations" value="3"/>
-				<option key="--good-runs" value="20"/>
-				<option key="--eval-runs" value="10"/>
-				<option key="--runs-pr-state" value="10"/>
-				<option key="--diagnostic" value="0"/>
-			</result>
-		</query>
-		<query>
-			<formula>E&lt;&gt; dStateEgo.detection.collide</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>E&lt;&gt; dStateEgo.detection.reach &amp;&amp; !dStateEgo.detection.outside &amp;&amp; !dStateEgo.detection.collide</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula/>
-			<comment>//</comment>
-		</query>
-		<query>
-			<formula>strategy safe = control:A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside</formula>
-			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-16 14:19:45 +0200">
-				<option key="--total-runs" value="50"/>
-				<option key="--max-iterations" value="3"/>
-				<option key="--good-runs" value="20"/>
-				<option key="--eval-runs" value="10"/>
-				<option key="--runs-pr-state" value="10"/>
-				<option key="--diagnostic" value="0"/>
-			</result>
-		</query>
-		<query>
-			<formula>strategy safe = control:A[] !dStateEgo.detection.outside</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>saveStrategy("/Users/rgu01/Library/CloudStorage/OneDrive-Mälardalensuniversitet/Documents/Postdoc/Conferences/2024/ISoLA/models/safe.out", safe)</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>simulate [&lt;=MAXTIME] { varsEgo.acceleration, i2d(dStateEgo.acceleration), varsEgo.velocity, i2d(dStateEgo.velocity) } under safe</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>simulate [&lt;=MAXTIME] { varsEgo.yawRate, i2d(dStateEgo.orientation), varsEgo.orientation } under safe</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>simulate [&lt;=MAXTIME] { varsEgo.x, i2d(dStateEgo.position.x), varsEgo.y, i2d(dStateEgo.position.y) } under safe</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>simulate [&lt;=MAXTIME;100] { varsEgo.x-i2d(dStateEgo.position.x), varsEgo.y-i2d(dStateEgo.position.y) } under safe</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside under safe</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>Pr[&lt;=10](&lt;&gt;dStateEgo.detection.reach) under safe</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>E[&lt;=100;100](min:getDisP2P(dStateEgo.position, staticObs[0].center)) under safe</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>E[&lt;=100;100](min:getDisP2P(dStateEgo.position, planning.goal)) under safe</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>//</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>strategy reachSafe = minE(D) [&lt;=MAXTIME] {egoController.location}-&gt;{dStateEgo.position.x, dStateEgo.position.y,
-					  dStateEgo.velocity, dStateEgo.orientation, dStateEgo.acceleration,
-					  dStateEgo.yawRate}: &lt;&gt; time&gt;=MAXTIME under safe</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>simulate [&lt;=MAXTIME;100] { getDisP2P(dStateEgo.position, planning.goal) } under safe</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>simulate [&lt;=MAXTIME;100] { getDisP2P(dStateEgo.position, planning.goal) } under reachSafe</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>Pr[&lt;=10](&lt;&gt; dStateEgo.detection.reach) under reachSafe</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>E[&lt;=MAXTIME;100](min:getDisP2P(dStateEgo.position, staticObs[0].center)) under reachSafe</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>E[&lt;=MAXTIME;100](min:getDisP2P(dStateEgo.position, planning.goal)) under reachSafe</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula/>
-			<comment>//</comment>
-		</query>
-		<query>
-			<formula>strategy reach = minE(D) [&lt;=MAXTIME] {egoController.location, dStateEgo.position.x, dStateEgo.position.y,
-					  dStateEgo.velocity, dStateEgo.orientation, dStateEgo.acceleration,
-					  dStateEgo.yawRate}-&gt;{}: &lt;&gt; time&gt;=MAXTIME</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>saveStrategy("/home/ron/Projects/Commonroad/uppaal/reach.out", reach)</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>A&lt;&gt; dStateEgo.detection.reach under reach</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside under reach</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>simulate [&lt;=MAXTIME] { varsEgo.x, i2d(dStateEgo.position.x), varsEgo.y, i2d(dStateEgo.position.y) } under reach</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>E[&lt;=MAXTIME;100](min:getDisP2P(dStateEgo.position, staticObs[0].center)) under reach</formula>
-			<comment/>
-		</query>
-		<query>
-			<formula>E[&lt;=MAXTIME;100](min:getDisP2P(dStateEgo.position, planning.goal)) under reach</formula>
+			<formula>simulate [&lt;=MAXTIME] { varsEgo.x, varsEgo.y, varsEgo.orientation, varsEgo.velocity, varsEgo.acceleration } under reachSafe</formula>
 			<comment/>
 		</query>
 	</queries>

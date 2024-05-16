@@ -194,10 +194,11 @@ const ST_PLANNING planning = {{6976, 1952}};
 
 broadcast chan chooseEgo, chooseObs, begin, update;
 
-ST_DSTATE dStateEgo;
+ST_DSTATE dStateEgo;       // discrete variables
 ST_VARIABLES varsEgo;      // continuous variables
-hybrid clock D;         /// "cost" of distance used in strategy optimization
-clock time;             // global time
+ST_RECTANGLE shapeEgo;     // shape of ego vehicle
+hybrid clock D;            /// "cost" of distance used in strategy optimization
+clock time;                // global time
 
 double i2d(const int32_t i) {
     double v = i/SCALE;
@@ -442,17 +443,11 @@ bool check_collision(ST_RECTANGLE veh_st_rect1, ST_RECTANGLE veh_st_rect2, int d
 	<template>
 		<name x="5" y="5">MovingObs</name>
 		<parameter>const id_t ID, const ST_CSTATE &amp;initCS, const ST_RECTANGLE &amp;shape, const ST_PAIR trajectory[MAXTP]</parameter>
-		<declaration>// Place local declarations here.
-ST_VARIABLES vars;  // continuous variables
+		<declaration>ST_VARIABLES vars;  // continuous variables
 ST_DSTATE dState;   // discrete state
 uint8_t pc = 0;     // policy counter
 uint8_t tc = 0;     // time counter
 ST_RECTANGLE self;
-
-// Generated trajectory starts
-//const uint8_t tLen = 3;
-//const ST_PAIR trajectory[tLen] = {{0,{{-20.0,-0.4},3.5,0.0,0.0,0.0}},{1,{{-23.5,-0.4},3.5,0.0,0.0,0.0}},{MAXTIME,{{15.0,-0.4},3.5,0.0,0.0,0.0}}};
-// Generated part ends
 
 void decisionMaking() {
     if(pc &lt; MAXTP &amp;&amp; tc == trajectory[pc].time) {
@@ -524,6 +519,9 @@ void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
     shape.center.x = dState.position.x;
     shape.center.y = dState.position.y;
     shape.orientation = dState.orientation;
+
+    dStateEgo.detection.collide |= check_collision(shapeEgo, shape, THRESHOLD);
+    dState.detection.collide = dStateEgo.detection.collide;
 }
 
 void updateCon(ST_VARIABLES &amp;vars) {
@@ -595,8 +593,6 @@ const int8_t Push[3] = {d2i(0.1), d2i(0.2), d2i(0.3)};
 const int8_t Turn[2] = {d2i(0.1), d2i(-0.1)};
 const bool CONSTANTSPEED = true;
 
-ST_RECTANGLE self;
-
 void opConst() {
     dStateEgo.acceleration = 0;
     varsEgo.acceleration = 0;
@@ -619,8 +615,8 @@ void opTurn(int dir) {
     double rOrientation = i2d(no);
     double vx = rVelocity*cos(rOrientation);
     double vy = rVelocity*sin(rOrientation);
-    int nx = self.center.x + d2i(vx) * P;
-    int ny = self.center.y + d2i(vy) * P;
+    int nx = shapeEgo.center.x + d2i(vx) * P;
+    int ny = shapeEgo.center.y + d2i(vy) * P;
 
     dStateEgo.yawRate = Turn[dir];
     varsEgo.yawRate = i2d(Turn[dir]);
@@ -658,8 +654,8 @@ bool canTurn(int dir) {
     ST_DPOINT box_corners[4];
     bool outroad = false;
 
-    nextShape.center.x = self.center.x + d2i(vx) * P;
-    nextShape.center.y = self.center.y + d2i(vy) * P;
+    nextShape.center.x = shapeEgo.center.x + d2i(vx) * P;
+    nextShape.center.y = shapeEgo.center.y + d2i(vy) * P;
     nextShape.orientation = nextOrientation;
     outroad = !check_inlane_laneNet(nextShape, lane, veh_corners, box_corners);
 
@@ -747,9 +743,8 @@ void initDis(ST_DSTATE &amp;dState) {
 
 void initialize() {
     initDis(dStateEgo);
-
-    self = shape;
-    self.center = dStateEgo.position;
+    shapeEgo = shape;
+    shapeEgo.center = dStateEgo.position;
 }
 
 
@@ -810,7 +805,7 @@ simutaneously.</label>
 			<source ref="id8"/>
 			<target ref="id8"/>
 			<label kind="synchronisation" x="-306" y="144">update?</label>
-			<label kind="assignment" x="-306" y="161">updateDis(dStateEgo,self)</label>
+			<label kind="assignment" x="-306" y="161">updateDis(dStateEgo,shapeEgo)</label>
 			<nail x="-331" y="170"/>
 			<nail x="-306" y="170"/>
 		</transition>
@@ -818,7 +813,7 @@ simutaneously.</label>
 			<source ref="id5"/>
 			<target ref="id5"/>
 			<label kind="synchronisation" x="-25" y="93">update?</label>
-			<label kind="assignment" x="-25" y="119">updateDis(dStateEgo,self)</label>
+			<label kind="assignment" x="-25" y="119">updateDis(dStateEgo,shapeEgo)</label>
 			<nail x="-34" y="102"/>
 			<nail x="-34" y="136"/>
 		</transition>
@@ -826,7 +821,7 @@ simutaneously.</label>
 			<source ref="id6"/>
 			<target ref="id6"/>
 			<label kind="synchronisation" x="-42" y="-144">update?</label>
-			<label kind="assignment" x="-42" y="-127">updateDis(dStateEgo,self)</label>
+			<label kind="assignment" x="-42" y="-127">updateDis(dStateEgo,shapeEgo)</label>
 			<nail x="-34" y="-136"/>
 			<nail x="-34" y="-102"/>
 		</transition>
@@ -834,7 +829,7 @@ simutaneously.</label>
 			<source ref="id4"/>
 			<target ref="id4"/>
 			<label kind="synchronisation" x="-314" y="-187">update?</label>
-			<label kind="assignment" x="-314" y="-170">updateDis(dStateEgo,self)</label>
+			<label kind="assignment" x="-314" y="-170">updateDis(dStateEgo,shapeEgo)</label>
 			<nail x="-306" y="-170"/>
 			<nail x="-340" y="-170"/>
 		</transition>
@@ -1045,10 +1040,10 @@ obs203 = MovingObs(203, initCS203, shapeObs203, trajectory203);
 
 // position, velocity, orientation, acceleration, yawRate
 const ST_CSTATE initEgo = {{NONE, NONE}, 3.0, 0.0, 0.0, 0.0}; 
-const ST_RECTANGLE shapeEgo = {{NONE, NONE}, 100, 450, 0};
+const ST_RECTANGLE initShapeEgo = {{NONE, NONE}, 100, 450, 0};
 const ST_RULES rules = {400, 0, 20, -20}; 
-const int[0,MAXL] initLane = 0;
-egoController = Controller(1, initLane, initEgo, shapeEgo, rules);
+const int[0,MAXL] initLane = 10;
+egoController = Controller(1, initLane, initEgo, initShapeEgo, rules);
 egoDynamics = Dynamics(1, initEgo);
 
 // Generated model instances start
@@ -1110,6 +1105,14 @@ system Decisions, egoController, egoDynamics, obs200, obs201, obs202, obs203;
 		<query>
 			<formula>A[] !dStateEgo.detection.collide</formula>
 			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-16 23:21:57 +0200">
+				<option key="--total-runs" value="50"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--good-runs" value="20"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+			</result>
 		</query>
 		<query>
 			<formula>A[] !dStateEgo.detection.outside</formula>

@@ -1,7 +1,8 @@
 # CommonUppRoad
-uppaal_model: a folder for storing uppaal models and shell files for verifyta the models.
+uppaal: a folder for storing uppaal models and shell files for verifyta the models.
 
-demo.py: demo codes for showing how the transformation between CommonRoad and Uppaal is done.
+generate_cr_scenarios.py: putting the trajectory of the ego vehicle into a scenario.
+generate_uppaal_models.pu: converting a scenario into things in uppaal model
 
 # Prerequisites
 Python 3.10

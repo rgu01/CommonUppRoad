@@ -144,7 +144,7 @@ for xml_file in os.listdir(input_file_folder):
 
         # const ST_CSTATE initCS1 = {{2.25, 3.50}, 2.30, 0.0, 0.0, 0.0};  // initial state of a moving obstacle
         obs_ini_pos = dyn_obs._initial_state.position
-        obs_ini_vel = dyn_obs._initial_state.orientation
+        obs_ini_vel = dyn_obs._initial_state.velocity
         obs_ini_ori = dyn_obs._initial_state.orientation
         obs_ini_acc = dyn_obs._initial_state.acceleration
         obs_ini_yaw = dyn_obs._initial_state.yaw_rate

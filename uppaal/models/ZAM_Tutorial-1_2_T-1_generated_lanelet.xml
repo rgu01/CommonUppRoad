@@ -3,7 +3,7 @@
 <nta>
 	<declaration>// Generated scenario starts
 const int P = 1;
-const uint8_t MAXTIME = 30;
+const uint8_t MAXTIME = 10;
 const int MAXP = 2;
 const int NONE = -1;
 const int MAXL = 3;

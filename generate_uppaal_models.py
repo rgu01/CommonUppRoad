@@ -53,7 +53,8 @@ for xml_file in os.listdir(input_file_folder):
     MAXPRE = max(1, max(len(lane.predecessor) for lane in scenario.lanelet_network.lanelets))
     # MAXSUC is the maximal number of successor lanes 
     MAXSUC = max(1, max(len(lane.successor) for lane in scenario.lanelet_network.lanelets))
-
+    # TIMESTEPSIZE is the step time size
+    TIMESTEPSIZE = scenario.dt
 
 
     # %% construct the lanelet network declaration in c code
@@ -217,6 +218,7 @@ for xml_file in os.listdir(input_file_folder):
     MAXTP_str = f"const int MAXTP = {MAXTP};"
     MAXPRE_str = f"const int MAXPRE = {MAXPRE};"
     MAXSUC_str = f"const int MAXSUC = {MAXSUC};"
+    TIMESTEPSIZE_str = f"const double TIMESTEPSIZE = {TIMESTEPSIZE};"
     SCALE_str = "const double SCALE = 100.0;"
     THRES_str = "const int THRESHOLD = 200;"
     PHOLDER_str = "const ST_PAIR PHOLDER = {NONE,{{NONE,NONE},NONE,NONE,NONE,NONE}};"
@@ -247,6 +249,8 @@ for xml_file in os.listdir(input_file_folder):
                 file.write(MAXSUC_str + "\n")
                 file.write(SCALE_str + "\n")
                 file.write(THRES_str + "\n")
+                file.write(TIMESTEPSIZE_str + "\n")
+                
                 # Call the function to write the large static block
                 write_large_block(file)
 

@@ -14,6 +14,7 @@ const int MAXPRE = 3;
 const int MAXSUC = 3;
 const double SCALE = 100.0;
 const int THRESHOLD = 200;
+const double TIMESTEPSIZE = 0.1;
 
 typedef int[-1,65535] id_t;
 
@@ -210,18 +211,15 @@ int32_t d2i(const double i) {
     return v;
 }
 
+double mTimeStep(const double value) {
+    return value*TIMESTEPSIZE;
+}
+
 int getDisP2P(const ST_DPOINT &amp;p1, const ST_DPOINT &amp;p2) {
     double distance = 0.0;
     double rx1 = i2d(p1.x), ry1 = i2d(p1.y);
     double rx2 = i2d(p2.x), ry2 = i2d(p2.y);
     distance = sqrt(pow(rx1 - rx2, 2) + pow(ry1 - ry2, 2));
-
-    return d2i(distance);
-}
-
-int getDisP2L(const ST_DPOINT &amp;p, const ST_DLINE &amp;l) {
-    // do nothing for now
-    double distance = 0.0;
 
     return d2i(distance);
 }
@@ -442,7 +440,7 @@ bool check_collision(ST_RECTANGLE veh_st_rect1, ST_RECTANGLE veh_st_rect2, int d
 </declaration>
 	<template>
 		<name x="5" y="5">MovingObs</name>
-		<parameter>const id_t ID, const ST_CSTATE &amp;initCS, const ST_RECTANGLE &amp;shape, const ST_PAIR trajectory[MAXTP]</parameter>
+		<parameter>const id_t ID, const ST_CSTATE &amp;initCS, const ST_RECTANGLE &amp;shape, const ST_PAIR &amp;trajectory[MAXTP]</parameter>
 		<declaration>ST_VARIABLES vars;  // continuous variables
 ST_DSTATE dState;   // discrete state
 uint8_t pc = 0;     // policy counter
@@ -451,10 +449,16 @@ ST_RECTANGLE self;
 
 void decisionMaking() {
     if(pc &lt; MAXTP &amp;&amp; tc == trajectory[pc].time) {
-        vars.acceleration = trajectory[pc].cState.acceleration;
-        vars.yawRate = trajectory[pc].cState.yawRate;
-        dState.acceleration = d2i(trajectory[pc].cState.acceleration);
-        dState.yawRate = d2i(trajectory[pc].cState.yawRate);
+        // predefined trajectory starts
+        vars.x = trajectory[pc].cState.position.x;
+        vars.y = trajectory[pc].cState.position.y;
+        vars.velocity = mTimeStep(trajectory[pc].cState.velocity);
+
+        vars.acceleration = mTimeStep(trajectory[pc].cState.acceleration);
+        vars.yawRate = mTimeStep(trajectory[pc].cState.yawRate);
+
+        dState.acceleration = d2i(mTimeStep(trajectory[pc].cState.acceleration));
+        dState.yawRate = d2i(mTimeStep(trajectory[pc].cState.yawRate));
         pc++;
     }
     else if(pc &lt; MAXTP) {
@@ -473,20 +477,20 @@ void decisionMaking() {
 void initCon(ST_VARIABLES &amp;vars, const ST_CSTATE &amp;initCS) {
     vars.x = initCS.position.x;
     vars.y = initCS.position.y;
-    vars.velocity = initCS.velocity;
+    vars.velocity = mTimeStep(initCS.velocity);
     vars.orientation = initCS.orientation;
-    vars.acceleration = initCS.acceleration;
-    vars.yawRate = initCS.yawRate;
+    vars.acceleration = mTimeStep(initCS.acceleration);
+    vars.yawRate = mTimeStep(initCS.yawRate);
     time = 0;  
 }
 
 void initDis(ST_DSTATE &amp;dState, const ST_CSTATE &amp;initCS) {
     dState.position.x = d2i(initCS.position.x);
     dState.position.y = d2i(initCS.position.y);
-    dState.velocity = d2i(initCS.velocity);
+    dState.velocity = d2i(mTimeStep(initCS.velocity));
     dState.orientation = d2i(initCS.orientation);
-    dState.acceleration = d2i(initCS.acceleration);
-    dState.yawRate = d2i(initCS.yawRate);
+    dState.acceleration = d2i(mTimeStep(initCS.acceleration));
+    dState.yawRate = d2i(mTimeStep(initCS.yawRate));
 }
 
 void updateDis(ST_DSTATE &amp;dState, ST_RECTANGLE &amp;shape) {
@@ -731,10 +735,10 @@ void initDis(ST_DSTATE &amp;dState) {
     angle = atan2(ye-ys,xe-xs);
 
     dState.position = middleDStart;
-    dState.velocity = d2i(initCS.velocity);
+    dState.velocity = d2i(mTimeStep(initCS.velocity));
     dState.orientation = d2i(angle);
-    dState.acceleration = d2i(initCS.acceleration);
-    dState.yawRate = d2i(initCS.yawRate);
+    dState.acceleration = d2i(mTimeStep(initCS.acceleration));
+    dState.yawRate = d2i(mTimeStep(initCS.yawRate));
 
     dState.detection.collide = false;
     dState.detection.outside = false;
@@ -994,10 +998,10 @@ counter!=MAXTIME</label>
 
     vars.x = i2d(middleDStart.x);
     vars.y = i2d(middleDStart.y);
-    vars.velocity = initCS.velocity;
+    vars.velocity = mTimeStep(initCS.velocity);
     vars.orientation = angle;
-    vars.acceleration = initCS.acceleration;
-    vars.yawRate = initCS.yawRate;
+    vars.acceleration = mTimeStep(initCS.acceleration);
+    vars.yawRate = mTimeStep(initCS.yawRate);
 
     time = 0;
     if(dStateEgo.detection.reach) 
@@ -1063,9 +1067,9 @@ obs203 = MovingObs(203, initCS203, shapeObs203, trajectory203);
 // Generated moving obstacles ends
 
 // position, velocity, orientation, acceleration, yawRate
-const ST_CSTATE initEgo = {{NONE, NONE}, 3.0, 0.0, 0.0, 0.0}; 
+const ST_CSTATE initEgo = {{NONE, NONE}, 30.0, 0.0, 0.0, 0.0}; 
 const ST_RECTANGLE initShapeEgo = {{NONE, NONE}, 100, 450, 0};
-const ST_RULES rules = {400, 0, 20, -20}; 
+const ST_RULES rules = {4000, 0, 20, -20}; 
 const int[0,MAXL] initLane = 0;
 egoController = Controller(1, initLane, initEgo, initShapeEgo, rules);
 egoDynamics = Dynamics(1, initLane, initEgo);
@@ -1086,13 +1090,60 @@ system Decisions, egoController, egoDynamics, obs200, obs201, obs202, obs203;
 			<formula>strategy safe = control:A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside
 </formula>
 			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-17 10:01:34 +0200">
+				<option key="--total-runs" value="50"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--good-runs" value="20"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+			</result>
 		</query>
 		<query>
 			<formula>strategy reachSafe = minE(D) [&lt;=MAXTIME] {egoController.location}-&gt;{dStateEgo.position.x, dStateEgo.position.y, dStateEgo.velocity, dStateEgo.orientation, dStateEgo.acceleration, dStateEgo.yawRate}: &lt;&gt; time&gt;=MAXTIME under safe</formula>
 			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-17 10:01:38 +0200">
+				<option key="--total-runs" value="50"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--good-runs" value="20"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+			</result>
 		</query>
 		<query>
 			<formula>simulate [&lt;=MAXTIME] { varsEgo.x, varsEgo.y, varsEgo.orientation, varsEgo.velocity, varsEgo.acceleration } under reachSafe</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-17 10:01:41 +0200">
+				<option key="--total-runs" value="50"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--good-runs" value="20"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+				<plot title="Simulations (1)" xaxis="time" yaxis="value">
+					<series title="varsEgo.x" type="l" color="0xff0000" encoding="csv">0.0,0.0
+10.000002,30.000006
+					</series>
+					<series title="varsEgo.y" type="l" color="0xccff00" encoding="csv">0.0,0.0
+10.000002,0.0
+					</series>
+					<series title="varsEgo.orientation" type="l" color="0x00ff66" encoding="csv">0.0,0.0
+10.000002,0.0
+					</series>
+					<series title="varsEgo.velocity" type="l" color="0x0066ff" encoding="csv">0.0,0.0
+0.0,3.0
+10.000002,3.0
+					</series>
+					<series title="varsEgo.acceleration" type="l" color="0xcc00ff" encoding="csv">0.0,0.0
+10.000002,0.0
+					</series>
+					<comment/>
+				</plot>
+			</result>
+		</query>
+		<query>
+			<formula>Pr[&lt;=MAXTIME] varsEgo</formula>
 			<comment/>
 		</query>
 	</queries>

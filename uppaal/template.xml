@@ -936,9 +936,5 @@ egoDynamics = Dynamics(1, initLane, initEgo);
 				</plot>
 			</result>
 		</query>
-		<query>
-			<formula>Pr[&lt;=MAXTIME] varsEgo</formula>
-			<comment/>
-		</query>
 	</queries>
 </nta>

@@ -1087,6 +1087,14 @@ system Decisions, egoController, egoDynamics, obs200, obs201, obs202, obs203;
 		<option key="--runs-pr-state" value="10"/>
 		<option key="--diagnostic" value="0"/>
 		<query>
+			<formula>E&lt;&gt; dStateEgo.detection.reach</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>E[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside</formula>
+			<comment/>
+		</query>
+		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside
 </formula>
 			<comment/>

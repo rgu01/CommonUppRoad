@@ -132,7 +132,7 @@ const ST_LANE laneNet[MAXL] = {lane1, lane2, lane3, lane4, lane5, lane6};
 const bool staticObsExists = false;
 const ST_RECTANGLE staticObs[MAXSO] = {{{NONE, NONE}, NONE, NONE, NONE}};
 
-const ST_PLANNING planning = {{4281, 206}};
+const ST_PLANNING planning = {{-446, 94}};
 
 
 // Generated scenario ends
@@ -1025,10 +1025,26 @@ system Decisions, egoController, egoDynamics, obs484, obs489;
 		<query>
 			<formula>E&lt;&gt; dStateEgo.detection.reach</formula>
 			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-21 09:09:10 +0200">
+				<option key="--total-runs" value="50"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--good-runs" value="20"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+			</result>
 		</query>
 		<query>
 			<formula>E[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside</formula>
 			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-21 09:08:09 +0200">
+				<option key="--total-runs" value="50"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--good-runs" value="20"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+			</result>
 		</query>
 		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside

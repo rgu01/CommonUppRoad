@@ -156,7 +156,7 @@ const ST_LANE laneNet[MAXL] = {lane1, lane2, lane3, lane4, lane5, lane6, lane7, 
 const bool staticObsExists = false;
 const ST_RECTANGLE staticObs[MAXSO] = {{{NONE, NONE}, NONE, NONE, NONE}};
 
-const ST_PLANNING planning = {{1251, 262}};
+const ST_PLANNING planning = {{-10376, -2394}};
 
 
 // Generated scenario ends
@@ -1065,6 +1065,14 @@ system Decisions, egoController, egoDynamics, obs1, obs2, obs4, obs5, obs7;
 		<query>
 			<formula>E[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside</formula>
 			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-21 09:11:26 +0200">
+				<option key="--total-runs" value="50"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--good-runs" value="20"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+			</result>
 		</query>
 		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside

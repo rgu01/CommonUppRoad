@@ -48,7 +48,7 @@ def make_dynamic_obstacle(obstacle_id, data, w=1.8, l=4.3):
     prediction = TrajectoryPrediction(trajectory, shape)
 
     obstacle = DynamicObstacle(
-        obstacle_id, ObstacleType.CAR, shape, inital_state, prediction
+        obstacle_id, ObstacleType.UNKNOWN, shape, inital_state, prediction
     )
     return obstacle
 
@@ -96,9 +96,9 @@ draw_params = DynamicObstacleParams()
 dp.time_end = len(sample)
 dp.dynamic_obstacle.draw_icon = True
 dp.dynamic_obstacle.draw_shape = True
+dp.dynamic_obstacle.occupancy.shape.facecolor = "yellow"
 draw_params.vehicle_shape.occupancy.shape.facecolor = "green"
 
 scenario.dynamic_obstacles[0].draw(rnd,draw_params)
 planning_problem_set.draw(rnd)
-#rnd.render()
-rnd.create_video([scenario,planning_problem_set], 'uppaal_generated.gif', draw_params=dp)
+rnd.create_video([scenario,planning_problem_set], "experiments/animation/" + str(scenario.scenario_id) + "_uppaal.gif", draw_params=dp)

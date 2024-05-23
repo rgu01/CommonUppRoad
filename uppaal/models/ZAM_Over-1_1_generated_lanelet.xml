@@ -143,7 +143,7 @@ double mTimeStep(const double value) {
     return value*TIMESTEPSIZE;
 }
 
-int getDisP2P(const ST_DPOINT &amp;p1, const ST_DPOINT &amp;p2) {
+int32_t getDisP2P(const ST_DPOINT &amp;p1, const ST_DPOINT &amp;p2) {
     double distance = 0.0;
     double rx1 = i2d(p1.x), ry1 = i2d(p1.y);
     double rx2 = i2d(p2.x), ry2 = i2d(p2.y);
@@ -662,11 +662,16 @@ void initDis(ST_DSTATE &amp;dState) {
 
     angle = atan2(ye-ys,xe-xs);
 
-    dState.position = middleDStart;
-    dState.velocity = d2i(mTimeStep(initCS.velocity));
-    dState.orientation = d2i(angle);
+    if(initCS.position.x == NONE || initCS.position.y == NONE) {
+        dState.position = middleDStart;
+    } else {
+        dState.position.x = d2i(initCS.position.x);
+        dState.position.y = d2i(initCS.position.y);
+    }
     dState.acceleration = d2i(mTimeStep(initCS.acceleration));
+    dState.velocity = d2i(mTimeStep(initCS.velocity));
     dState.yawRate = d2i(mTimeStep(initCS.yawRate));
+    dState.orientation = d2i(angle);
 
     dState.detection.collide = false;
     dState.detection.outside = false;
@@ -924,8 +929,13 @@ counter!=MAXTIME</label>
 
     angle = atan2(ye-ys,xe-xs);
 
-    vars.x = i2d(middleDStart.x);
-    vars.y = i2d(middleDStart.y);
+    if(initCS.position.x == NONE || initCS.position.y == NONE) {
+        vars.x = i2d(middleDStart.x);
+        vars.y = i2d(middleDStart.y);
+    } else {
+        vars.x = initCS.position.x;
+        vars.y = initCS.position.y;
+    }
     vars.velocity = mTimeStep(initCS.velocity);
     vars.orientation = angle;
     vars.acceleration = mTimeStep(initCS.acceleration);

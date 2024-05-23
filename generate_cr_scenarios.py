@@ -7,7 +7,7 @@ import numpy as np
 
 from commonroad.geometry.shape import Rectangle
 from commonroad.common.file_reader import CommonRoadFileReader
-from commonroad.visualization.mp_renderer import MPRenderer, MPDrawParams
+from commonroad.visualization.mp_renderer import MPRenderer, MPDrawParams, DynamicObstacleParams
 from commonroad.scenario.obstacle import DynamicObstacle, ObstacleType
 from commonroad.scenario.state import CustomState, InitialState
 from commonroad.scenario.trajectory import Trajectory
@@ -48,7 +48,7 @@ def make_dynamic_obstacle(obstacle_id, data, w=1.8, l=4.3):
     prediction = TrajectoryPrediction(trajectory, shape)
 
     obstacle = DynamicObstacle(
-        obstacle_id, ObstacleType.TRUCK, shape, inital_state, prediction
+        obstacle_id, ObstacleType.CAR, shape, inital_state, prediction
     )
     return obstacle
 
@@ -91,5 +91,14 @@ scenario.add_objects(ego)
 # render and store as gif
 rnd = MPRenderer()
 dp = MPDrawParams()
+draw_params = DynamicObstacleParams()
+
 dp.time_end = len(sample)
+dp.dynamic_obstacle.draw_icon = True
+dp.dynamic_obstacle.draw_shape = True
+draw_params.vehicle_shape.occupancy.shape.facecolor = "green"
+
+scenario.dynamic_obstacles[0].draw(rnd,draw_params)
+planning_problem_set.draw(rnd)
+#rnd.render()
 rnd.create_video([scenario,planning_problem_set], 'uppaal_generated.gif', draw_params=dp)

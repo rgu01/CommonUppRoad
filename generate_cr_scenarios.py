@@ -92,7 +92,7 @@ os.makedirs(output_fig_path, exist_ok=True)
 # Render each time step and save as figures
 for i in range(len(sample)):
     plt.figure(figsize=(25, 10))
-    rnd = MPRenderer()
+    rnd = MPRenderer(plot_limits=[-20, 125, -25, 125]) # change this to different scenarios
     rnd.draw_params.time_begin = i
     scenario.draw(rnd)
 

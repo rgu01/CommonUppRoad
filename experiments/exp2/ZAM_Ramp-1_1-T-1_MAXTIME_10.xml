@@ -3,7 +3,7 @@
 <nta>
 	<declaration>// Generated scenario starts
 const int P = 1;
-const uint8_t MAXTIME = 17;
+const uint8_t MAXTIME = 10;
 const int MAXP = 50;
 const int NONE = -1;
 const int MAXL = 11;
@@ -13,7 +13,7 @@ const int MAXTP = 50;
 const int MAXPRE = 1;
 const int MAXSUC = 1;
 const double SCALE = 100.0;
-const int THRESHOLD = 100;
+const int THRESHOLD = 200;
 const double TIMESTEPSIZE = 0.1;
 
 typedef int[-1,65535] id_t;
@@ -152,7 +152,7 @@ const ST_LANE laneNet[MAXL] = {lane1, lane2, lane3, lane4, lane5, lane6, lane7, 
 const bool staticObsExists = false;
 const ST_RECTANGLE staticObs[MAXSO] = {{{NONE, NONE}, NONE, NONE, NONE}};
 
-const ST_PLANNING planning = {{5000, 175}};
+const ST_PLANNING planning = {{2968, 25}};
 
 
 // Generated scenario ends
@@ -1040,20 +1040,20 @@ system Decisions, egoController, egoDynamics, obs13, obs14, obs15;
 // Generated model instances end
 </system>
 	<queries>
-		<option key="--total-runs" value="50"/>
+		<option key="--total-runs" value="200"/>
 		<option key="--max-iterations" value="3"/>
-		<option key="--good-runs" value="20"/>
 		<option key="--eval-runs" value="10"/>
+		<option key="--good-runs" value="100"/>
 		<option key="--runs-pr-state" value="10"/>
 		<option key="--diagnostic" value="0"/>
 		<query>
 			<formula>E&lt;&gt; dStateEgo.detection.reach</formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-21 11:06:55 +0200">
-				<option key="--total-runs" value="50"/>
+			<result outcome="success" type="quality" timestamp="2024-05-21 12:51:58 +0200">
+				<option key="--total-runs" value="5000"/>
 				<option key="--max-iterations" value="3"/>
-				<option key="--good-runs" value="20"/>
 				<option key="--eval-runs" value="10"/>
+				<option key="--good-runs" value="2000"/>
 				<option key="--runs-pr-state" value="10"/>
 				<option key="--diagnostic" value="0"/>
 			</result>
@@ -1061,16 +1061,24 @@ system Decisions, egoController, egoDynamics, obs13, obs14, obs15;
 		<query>
 			<formula>E[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside</formula>
 			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-21 12:52:02 +0200">
+				<option key="--total-runs" value="5000"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--good-runs" value="2000"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+			</result>
 		</query>
 		<query>
 			<formula>strategy safe = control:A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside
 </formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-17 10:01:34 +0200">
-				<option key="--total-runs" value="50"/>
+			<result outcome="success" type="quality" timestamp="2024-05-21 12:52:07 +0200">
+				<option key="--total-runs" value="5000"/>
 				<option key="--max-iterations" value="3"/>
-				<option key="--good-runs" value="20"/>
 				<option key="--eval-runs" value="10"/>
+				<option key="--good-runs" value="2000"/>
 				<option key="--runs-pr-state" value="10"/>
 				<option key="--diagnostic" value="0"/>
 			</result>
@@ -1117,6 +1125,25 @@ system Decisions, egoController, egoDynamics, obs13, obs14, obs15;
 					<comment/>
 				</plot>
 			</result>
+		</query>
+		<query>
+			<formula>strategy reach = minE(D) [&lt;=MAXTIME] {egoController.location}-&gt;{dStateEgo.position.x, dStateEgo.position.y, dStateEgo.velocity, dStateEgo.orientation, dStateEgo.acceleration, dStateEgo.yawRate}: &lt;&gt; time&gt;=MAXTIME</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-21 12:51:07 +0200">
+				<option key="--max-iterations" value="3"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--good-runs" value="500"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+			</result>
+		</query>
+		<query>
+			<formula>A[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside under reach</formula>
+			<comment/>
+		</query>
+		<query>
+			<formula>A&lt;&gt; dStateEgo.detection.reach under reach</formula>
+			<comment/>
 		</query>
 	</queries>
 </nta>

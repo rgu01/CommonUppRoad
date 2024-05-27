@@ -3,7 +3,7 @@
 <nta>
 	<declaration>// Generated scenario starts
 const int P = 1;
-const uint8_t MAXTIME = 10;
+const uint8_t MAXTIME = 50;
 const int MAXP = 22;
 const int NONE = -1;
 const int MAXL = 20;
@@ -1078,13 +1078,14 @@ obs203 = MovingObs(203, initCS203, shapeObs203, trajectory203);
 
 // Generated moving obstacles ends
 
-// position, velocity, orientation, acceleration, yawRate
-const ST_CSTATE initEgo = {{NONE, NONE}, 30.0, 0.0, 0.0, 0.0}; 
-const ST_RECTANGLE initShapeEgo = {{NONE, NONE}, 100, 450, 0};
+// Generated ego vehicle starts
+const ST_CSTATE initEgo = {{0.0, 0.0}, 11.0, 0.0, 0.0, 0.0};
+const ST_RECTANGLE initShapeEgo = {{0, 0}, 100, 450, 0};
 const ST_RULES rules = {4000, 0, 314, -314}; 
 const int[0,MAXL] initLane = 0;
 egoController = Controller(1, initLane, initEgo, initShapeEgo, rules);
 egoDynamics = Dynamics(1, initLane, initEgo);
+// Generated ego vehicle ends
 
 // Generated model instances start
 system Decisions, egoController, egoDynamics, obs200, obs201, obs202, obs203;

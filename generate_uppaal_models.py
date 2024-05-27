@@ -191,8 +191,10 @@ for xml_file in os.listdir(input_file_folder):
     planning_problem = list(planning_problem_set.planning_problem_dict.values())
 
     ST_PLANNING_str_set = []
+    ego_init_str_set = []
     for planning_problem_veh in planning_problem:
         try:
+            init_ego = planning_problem_veh.initial_state
             goal_pos = planning_problem_veh.goal.state_list[0].position.center
         except AttributeError:
             try:
@@ -200,12 +202,23 @@ for xml_file in os.listdir(input_file_folder):
             except AttributeError:
                 logging.error("Could not find goal position in the specified format. Exiting.")
                 sys.exit(1)
-        
         goal_pos = (goal_pos*SCALE).astype(int)
         ST_PLANNING_obs_str = "{" + ", ".join(map(str, goal_pos)) + "}"
         ST_PLANNING_str_set.append(ST_PLANNING_obs_str)
-    ST_PLANNING_str = "const ST_PLANNING planning = {" + ", ".join(ST_PLANNING_str_set) + "};" # e.g., const ST_PLANNING planning = {{3000, 0}};
 
+        ego_ini_pos = init_ego.position
+        ego_ini_vel = init_ego.velocity
+        ego_ini_ori = init_ego.orientation
+        ego_ini_acc = init_ego.acceleration
+        ego_ini_yaw = init_ego.yaw_rate
+        ST_RECTANGLE_ego_ini_pos = "{" + ", ".join(map(str, ego_ini_pos)) + "}"
+        init_ego_str = "const ST_CSTATE initEgo = {" + ", ".join([ST_RECTANGLE_ego_ini_pos, f"{ego_ini_vel}", f"{ego_ini_ori}", f"{ego_ini_acc}", f"{ego_ini_yaw}"]) + "};\n"
+        init_ego_shape_str = "const ST_RECTANGLE initShapeEgo = {{" + ", ".join(map(str, (ego_ini_pos*SCALE).astype(int))) + "}, 100, 450, 0};"
+        ego_init_str_set.append(init_ego_str)
+        ego_init_str_set.append(init_ego_shape_str)
+
+    ST_PLANNING_str = "const ST_PLANNING planning = {" + ", ".join(ST_PLANNING_str_set) + "};" # e.g., const ST_PLANNING planning = {{3000, 0}};
+    ST_EGO_INIT_str = "".join(ego_init_str_set)
 
     # %% construct the definition and hyperparameter declaration in c code
     P_str = "const int P = 1;"
@@ -232,6 +245,7 @@ for xml_file in os.listdir(input_file_folder):
     scenario_prompt = "<declaration>// Generated scenario starts"
     moving_obs_prompt = "<system>// Generated moving obstacles starts"
     model_prompt = "// Generated model instances start"
+    ego_prompt = "// Generated ego vehicle starts"
 
     with open(output_file, 'w') as file:
         for line in lines:
@@ -285,5 +299,9 @@ for xml_file in os.listdir(input_file_folder):
                     file.write(trajectory_str_set[i] + "\n")
                     file.write(MovingObs_str_set[i] + "\n")
 
+            if line.strip() == ego_prompt:
+                file.write(ST_EGO_INIT_str + "\n")
+
             if line.strip() == model_prompt:
                 file.write(system_str + "\n")
+            

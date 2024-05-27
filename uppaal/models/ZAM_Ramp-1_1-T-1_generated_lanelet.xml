@@ -3,7 +3,7 @@
 <nta>
 	<declaration>// Generated scenario starts
 const int P = 1;
-const uint8_t MAXTIME = 50;
+const uint8_t MAXTIME = 10;
 const int MAXP = 50;
 const int NONE = -1;
 const int MAXL = 11;
@@ -1038,13 +1038,14 @@ obs15 = MovingObs(15, initCS15, shapeObs15, trajectory15);
 
 // Generated moving obstacles ends
 
-// position, velocity, orientation, acceleration, yawRate
-const ST_CSTATE initEgo = {{0.0, 1.75}, 30.0, 0.0, 0.0, 0.0}; 
+// Generated ego vehicle starts
+const ST_CSTATE initEgo = {{0.0, 1.75}, 0.0, 0.0, 0.0, 0.0};
 const ST_RECTANGLE initShapeEgo = {{0, 175}, 100, 450, 0};
 const ST_RULES rules = {4000, 0, 314, -314}; 
 const int[0,MAXL] initLane = 0;
 egoController = Controller(1, initLane, initEgo, initShapeEgo, rules);
 egoDynamics = Dynamics(1, initLane, initEgo);
+// Generated ego vehicle ends
 
 // Generated model instances start
 system Decisions, egoController, egoDynamics, obs13, obs14, obs15;
@@ -1083,18 +1084,6 @@ system Decisions, egoController, egoDynamics, obs13, obs14, obs15;
 			<formula>strategy reachSafe = minE(D) [&lt;=MAXTIME] {egoController.location}-&gt;{dStateEgo.position.x, dStateEgo.position.y, dStateEgo.velocity, dStateEgo.orientation, dStateEgo.acceleration, dStateEgo.yawRate}: &lt;&gt; time&gt;=MAXTIME under safe</formula>
 			<comment/>
 			<result outcome="success" type="quality" timestamp="2024-05-17 10:01:38 +0200">
-				<option key="--total-runs" value="50"/>
-				<option key="--max-iterations" value="3"/>
-				<option key="--good-runs" value="20"/>
-				<option key="--eval-runs" value="10"/>
-				<option key="--runs-pr-state" value="10"/>
-				<option key="--diagnostic" value="0"/>
-			</result>
-		</query>
-		<query>
-			<formula>strategy reach = minE(D) [&lt;=MAXTIME]: &lt;&gt; time&gt;=MAXTIME</formula>
-			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-26 16:34:07 +0200">
 				<option key="--total-runs" value="50"/>
 				<option key="--max-iterations" value="3"/>
 				<option key="--good-runs" value="20"/>

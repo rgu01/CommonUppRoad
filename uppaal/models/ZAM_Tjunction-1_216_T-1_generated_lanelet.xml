@@ -1050,13 +1050,14 @@ obs7 = MovingObs(7, initCS7, shapeObs7, trajectory7);
 
 // Generated moving obstacles ends
 
-// position, velocity, orientation, acceleration, yawRate
-const ST_CSTATE initEgo = {{NONE, NONE}, 30.0, 0.0, 0.0, 0.0}; 
-const ST_RECTANGLE initShapeEgo = {{NONE, NONE}, 100, 450, 0};
+// Generated ego vehicle starts
+const ST_CSTATE initEgo = {{-45.165155, -2.9247824}, 4.764987, 0.18221198, 0.0, 0.0};
+const ST_RECTANGLE initShapeEgo = {{-4516, -292}, 100, 450, 0};
 const ST_RULES rules = {4000, 0, 314, -314}; 
 const int[0,MAXL] initLane = 0;
 egoController = Controller(1, initLane, initEgo, initShapeEgo, rules);
 egoDynamics = Dynamics(1, initLane, initEgo);
+// Generated ego vehicle ends
 
 // Generated model instances start
 system Decisions, egoController, egoDynamics, obs1, obs2, obs4, obs5, obs7;

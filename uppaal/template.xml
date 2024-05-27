@@ -548,14 +548,15 @@ void initDis(ST_DSTATE &amp;dState) {
 
     if(initCS.position.x == NONE || initCS.position.y == NONE) {
         dState.position = middleDStart;
+        dState.orientation = d2i(angle);
     } else {
         dState.position.x = d2i(initCS.position.x);
         dState.position.y = d2i(initCS.position.y);
+        dState.orientation = d2i(initCS.orientation);
     }
     dState.acceleration = d2i(mTimeStep(initCS.acceleration));
     dState.velocity = d2i(mTimeStep(initCS.velocity));
     dState.yawRate = d2i(mTimeStep(initCS.yawRate));
-    dState.orientation = d2i(angle);
 
     dState.detection.collide = false;
     dState.detection.outside = false;
@@ -816,12 +817,13 @@ counter!=MAXTIME</label>
     if(initCS.position.x == NONE || initCS.position.y == NONE) {
         vars.x = i2d(middleDStart.x);
         vars.y = i2d(middleDStart.y);
+        vars.orientation = angle;
     } else {
         vars.x = initCS.position.x;
         vars.y = initCS.position.y;
+        vars.orientation = initCS.orientation;
     }
     vars.velocity = mTimeStep(initCS.velocity);
-    vars.orientation = angle;
     vars.acceleration = mTimeStep(initCS.acceleration);
     vars.yawRate = mTimeStep(initCS.yawRate);
 
@@ -874,7 +876,7 @@ D' == getDisP2P(dStateEgo.position, planning.goal)
 // position, velocity, orientation, acceleration, yawRate
 const ST_CSTATE initEgo = {{NONE, NONE}, 30.0, 0.0, 0.0, 0.0}; 
 const ST_RECTANGLE initShapeEgo = {{NONE, NONE}, 100, 450, 0};
-const ST_RULES rules = {4000, 0, 20, -20}; 
+const ST_RULES rules = {4000, 0, 314, -314}; 
 const int[0,MAXL] initLane = 0;
 egoController = Controller(1, initLane, initEgo, initShapeEgo, rules);
 egoDynamics = Dynamics(1, initLane, initEgo);

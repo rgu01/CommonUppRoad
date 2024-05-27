@@ -90,7 +90,7 @@ def create_animation2(scenario, planning_problem_set, time):
 
 # Define variables for parsing
 root = os.path.dirname(__file__)
-SCENARIO_PATH = os.path.join(root, 'scenarios/USA_US101-1_1_T-1.xml')
+SCENARIO_PATH = os.path.join(root, 'scenarios/DEU_Ffb-1_3_T-1.xml')
 SAMPLING_LOG_PATH = os.path.join(root, 'uppaal/sampling.log')
 N_OBS_STATES = 5
 N_NEW_OBS = 0

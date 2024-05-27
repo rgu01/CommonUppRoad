@@ -1,1 +1,1 @@
-./bin_mac/verifyta ./models/USA_US101-1_1_T-1_generated_lanelet.xml query_learn.q -F 1.0 -u -D 0.01 -s --max-iterations 1 --eval-runs 1 --good-runs 1000 --total-runs 2000 --reset-no-better 1 --max-reset-learning 1
+./bin_mac/verifyta ./models/DEU_Ffb-1_3_T-1_generated_lanelet.xml query_learn.q -F 1.0 -u -D 0.01 -s --max-iterations 1 --eval-runs 1 --good-runs 5000 --total-runs 5000 --reset-no-better 1 --max-reset-learning 1

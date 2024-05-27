@@ -3,7 +3,7 @@
 <nta>
 	<declaration>// Generated scenario starts
 const int P = 1;
-const uint8_t MAXTIME = 17;
+const uint8_t MAXTIME = 50;
 const int MAXP = 50;
 const int NONE = -1;
 const int MAXL = 11;
@@ -13,7 +13,7 @@ const int MAXTP = 50;
 const int MAXPRE = 1;
 const int MAXSUC = 1;
 const double SCALE = 100.0;
-const int THRESHOLD = 100;
+const int THRESHOLD = 200;
 const double TIMESTEPSIZE = 0.1;
 
 typedef int[-1,65535] id_t;
@@ -700,14 +700,15 @@ void initDis(ST_DSTATE &amp;dState) {
 
     if(initCS.position.x == NONE || initCS.position.y == NONE) {
         dState.position = middleDStart;
+        dState.orientation = d2i(angle);
     } else {
         dState.position.x = d2i(initCS.position.x);
         dState.position.y = d2i(initCS.position.y);
+        dState.orientation = d2i(initCS.orientation);
     }
     dState.acceleration = d2i(mTimeStep(initCS.acceleration));
     dState.velocity = d2i(mTimeStep(initCS.velocity));
     dState.yawRate = d2i(mTimeStep(initCS.yawRate));
-    dState.orientation = d2i(angle);
 
     dState.detection.collide = false;
     dState.detection.outside = false;
@@ -968,12 +969,13 @@ counter!=MAXTIME</label>
     if(initCS.position.x == NONE || initCS.position.y == NONE) {
         vars.x = i2d(middleDStart.x);
         vars.y = i2d(middleDStart.y);
+        vars.orientation = angle;
     } else {
         vars.x = initCS.position.x;
         vars.y = initCS.position.y;
+        vars.orientation = initCS.orientation;
     }
     vars.velocity = mTimeStep(initCS.velocity);
-    vars.orientation = angle;
     vars.acceleration = mTimeStep(initCS.acceleration);
     vars.yawRate = mTimeStep(initCS.yawRate);
 
@@ -1037,9 +1039,9 @@ obs15 = MovingObs(15, initCS15, shapeObs15, trajectory15);
 // Generated moving obstacles ends
 
 // position, velocity, orientation, acceleration, yawRate
-const ST_CSTATE initEgo = {{NONE, NONE}, 30.0, 0.0, 0.0, 0.0}; 
-const ST_RECTANGLE initShapeEgo = {{NONE, NONE}, 100, 450, 0};
-const ST_RULES rules = {4000, 0, 20, -20}; 
+const ST_CSTATE initEgo = {{0.0, 1.75}, 30.0, 0.0, 0.0, 0.0}; 
+const ST_RECTANGLE initShapeEgo = {{0, 175}, 100, 450, 0};
+const ST_RULES rules = {4000, 0, 314, -314}; 
 const int[0,MAXL] initLane = 0;
 egoController = Controller(1, initLane, initEgo, initShapeEgo, rules);
 egoDynamics = Dynamics(1, initLane, initEgo);
@@ -1059,14 +1061,6 @@ system Decisions, egoController, egoDynamics, obs13, obs14, obs15;
 		<query>
 			<formula>E&lt;&gt; dStateEgo.detection.reach</formula>
 			<comment/>
-			<result outcome="success" type="quality" timestamp="2024-05-21 11:06:55 +0200">
-				<option key="--total-runs" value="50"/>
-				<option key="--max-iterations" value="3"/>
-				<option key="--good-runs" value="20"/>
-				<option key="--eval-runs" value="10"/>
-				<option key="--runs-pr-state" value="10"/>
-				<option key="--diagnostic" value="0"/>
-			</result>
 		</query>
 		<query>
 			<formula>E[] !dStateEgo.detection.collide &amp;&amp; !dStateEgo.detection.outside</formula>
@@ -1089,6 +1083,18 @@ system Decisions, egoController, egoDynamics, obs13, obs14, obs15;
 			<formula>strategy reachSafe = minE(D) [&lt;=MAXTIME] {egoController.location}-&gt;{dStateEgo.position.x, dStateEgo.position.y, dStateEgo.velocity, dStateEgo.orientation, dStateEgo.acceleration, dStateEgo.yawRate}: &lt;&gt; time&gt;=MAXTIME under safe</formula>
 			<comment/>
 			<result outcome="success" type="quality" timestamp="2024-05-17 10:01:38 +0200">
+				<option key="--total-runs" value="50"/>
+				<option key="--max-iterations" value="3"/>
+				<option key="--good-runs" value="20"/>
+				<option key="--eval-runs" value="10"/>
+				<option key="--runs-pr-state" value="10"/>
+				<option key="--diagnostic" value="0"/>
+			</result>
+		</query>
+		<query>
+			<formula>strategy reach = minE(D) [&lt;=MAXTIME]: &lt;&gt; time&gt;=MAXTIME</formula>
+			<comment/>
+			<result outcome="success" type="quality" timestamp="2024-05-26 16:34:07 +0200">
 				<option key="--total-runs" value="50"/>
 				<option key="--max-iterations" value="3"/>
 				<option key="--good-runs" value="20"/>

@@ -49,10 +49,10 @@ typedef struct {
 
 typedef struct {
     ST_DPOINT position;
-    int16_t velocity;
-    int16_t orientation;
-    int16_t acceleration;
-    int16_t yawRate;
+    int32_t velocity;
+    int32_t orientation;
+    int32_t acceleration;
+    int32_t yawRate;
     ST_DETECTION detection;
 }ST_DSTATE;
 
@@ -67,9 +67,9 @@ typedef struct {
 
 typedef struct {
     ST_DPOINT center;
-    int16_t width;
-    int16_t length;
-    int16_t orientation;
+    int32_t width;
+    int32_t length;
+    int32_t orientation;
 }ST_RECTANGLE;
 
 typedef struct {

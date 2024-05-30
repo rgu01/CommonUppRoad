@@ -25,7 +25,7 @@ for xml_file in os.listdir(input_file_folder):
 
     output_file = output_file_folder + "/" + file_name + "_generated_lanelet.xml"
 
-    SCALE = 100 # the scaling factor from double to int
+    SCALE = 10000 # the scaling factor from double to int
     MAXT = 10
     DEFAULT_VAL = 0
 
@@ -222,7 +222,7 @@ for xml_file in os.listdir(input_file_folder):
 
     # %% construct the definition and hyperparameter declaration in c code
     P_str = "const int P = 1;"
-    MAX_TIME_str = f"const uint8_t MAXTIME = {MAXT};"
+    MAX_TIME_str = f"const uint16_t MAXTIME = {MAXT};"
     MAXL_str = f"const int MAXL = {MAXL};"
     NONE_str = "const int NONE = -1;"
     MAXP_str = f"const int MAXP = {MAXP};"
@@ -232,7 +232,7 @@ for xml_file in os.listdir(input_file_folder):
     MAXPRE_str = f"const int MAXPRE = {MAXPRE};"
     MAXSUC_str = f"const int MAXSUC = {MAXSUC};"
     TIMESTEPSIZE_str = f"const double TIMESTEPSIZE = {TIMESTEPSIZE};"
-    SCALE_str = "const double SCALE = 100.0;"
+    SCALE_str = "const double SCALE = 10000.0;"
     THRES_str = "const int THRESHOLD = 200;"
     PHOLDER_str = "const ST_PAIR PHOLDER = {NONE,{{NONE,NONE},NONE,NONE,NONE,NONE}};"
     

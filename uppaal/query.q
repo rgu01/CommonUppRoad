@@ -1,3 +1,3 @@
-strategy safe = control:A[] !dStateEgo.detection.collide && !dStateEgo.detection.outside
-strategy reachSafe = minE(D) [<=MAXTIME] {egoController.location}->{dStateEgo.position.x, dStateEgo.position.y, dStateEgo.velocity, dStateEgo.orientation, dStateEgo.acceleration, dStateEgo.yawRate}: <> time>=MAXTIME under safe
-simulate [<=MAXTIME] { varsEgo.x, varsEgo.y, varsEgo.orientation, varsEgo.velocity, varsEgo.acceleration } under reachSafe
+strategy safe = control:A[] !cps_i_state.detection.collide && !cps_i_state.detection.outside
+strategy reachSafe = minE(cost) [<=MAXTIME] {}->{}: <> g_time>=MAXTIME under safe
+simulate [<=MAXTIME] { cps_dynamic.x, cps_dynamic.y, cps_dynamic.orientation, cps_dynamic.velocity, cps_dynamic.acceleration } under reachSafe

@@ -7,7 +7,7 @@ from parseCR.utils import write_large_block
 
 
 # %% load the files and parameters
-template_file = os.path.dirname(__file__) + "/uppaal/template.xml"
+template_file = os.path.dirname(__file__) + "/uppaal/template.xml" 
 # read template files and store lines
 with open(template_file, 'r') as template_file:
         lines = template_file.readlines()
@@ -25,12 +25,25 @@ for xml_file in os.listdir(input_file_folder):
 
     output_file = output_file_folder + "/" + file_name + "_generated_lanelet.xml"
 
-    SCALE = 10000 # the scaling factor from double to int
-    MAXT = 10
-    DEFAULT_VAL = 0
-
     # Parse the XML file
     scenario, planning_problem_set = CommonRoadFileReader(xml_file_path).open()
+
+    # SCALE = 10000 # the scaling factor from double to int
+    P = 1
+    BASE = 10
+    EXPONENT = 1
+    MAXT = 10
+    DEFAULT_VAL = 0.0
+    RADAR = 100
+    THRESHOLD = 0.02
+    N1 = 1 # sense period
+    N2 = 4 # decision-making period
+    MAXACT= 2
+    MAXOBS = scenario.dynamic_obstacles.__len__()
+    # Ego vehicle parameters
+    EV_WIDTH = 1
+    EV_LENGTH = 4.5
+    EV_ORI = 0 # initial orientation
 
     # MAXP is to set the maximal number of points of a lane
     for lane in scenario.lanelet_network.lanelets:
@@ -79,8 +92,8 @@ for xml_file in os.listdir(input_file_folder):
         lane_dirRight = True if (lane.adj_right_same_direction == True) else False
 
         # parse the left and right lanes and scale the position
-        leftLane = (lane._left_vertices*SCALE).astype(int)
-        rightLane = (lane._right_vertices*SCALE).astype(int)
+        leftLane = (lane._left_vertices*pow(BASE,EXPONENT)).astype(int)
+        rightLane = (lane._right_vertices*pow(BASE,EXPONENT)).astype(int)
         # merge the lane points if they are on the same straight line 
         if np.all(leftLane[:, 1] == leftLane[0, 1]) or np.all(leftLane[:, 0] == leftLane[0, 0]):
             leftLane = leftLane[[0, -1]]
@@ -113,10 +126,10 @@ for xml_file in os.listdir(input_file_folder):
     # %% construct the static obstacles declaration in c code
     ST_RECTANGLE_obs_str_set = []
     for static_obs in scenario.static_obstacles:
-        obs_pos = (static_obs._initial_state.position*SCALE).astype(int)
-        obs_ori = int(static_obs._initial_state.orientation*SCALE)
-        obs_width = int(static_obs._obstacle_shape._width*SCALE)
-        obs_length = int(static_obs._obstacle_shape._length*SCALE)
+        obs_pos = (static_obs._initial_state.position*pow(BASE,EXPONENT)).astype(int)
+        obs_ori = int(static_obs._initial_state.orientation*pow(BASE,EXPONENT))
+        obs_width = int(static_obs._obstacle_shape._width*pow(BASE,EXPONENT))
+        obs_length = int(static_obs._obstacle_shape._length*pow(BASE,EXPONENT))
         ST_RECTANGLE_obs_pos = "{" + ", ".join(map(str, obs_pos)) + "}"
         ST_RECTANGLE_obs_str_single = "{" + ", ".join([ST_RECTANGLE_obs_pos, f"{obs_width}", f"{obs_length}", f"{obs_ori}"]) + "}" # e.g., {{2000, 700}, 200, 450, 0}
         ST_RECTANGLE_obs_str_set.append(ST_RECTANGLE_obs_str_single)
@@ -134,27 +147,35 @@ for xml_file in os.listdir(input_file_folder):
     initCS_str_set = []
     shapeObs_str_set = []
     trajectory_str_set = []
-    MovingObs_str_set = []
+    Obstacle_str_set = []
     Obs_naming_set = []
+    obs_count = 0
 
     for dyn_obs in scenario.dynamic_obstacles:
-        obs_width = int(dyn_obs._obstacle_shape._width*SCALE)
-        obs_length = int(dyn_obs._obstacle_shape._length*SCALE)
-        obs_id = dyn_obs.obstacle_id
+        obs_width = int(dyn_obs._obstacle_shape._width*pow(BASE,EXPONENT))
+        obs_length = int(dyn_obs._obstacle_shape._length*pow(BASE,EXPONENT))
+        #obs_id = dyn_obs.obstacle_id
+        obs_id = obs_count
+        obs_count = obs_count + 1
 
-        # const ST_CSTATE initCS1 = {{2.25, 3.50}, 2.30, 0.0, 0.0, 0.0};  // initial state of a moving obstacle
+        # const ST_DSTATE initCS1 = {{2.25, 3.50}, 2.30, 0.0, 0.0, 0.0};  // initial state of a moving obstacle
         obs_ini_pos = dyn_obs._initial_state.position
         obs_ini_vel = dyn_obs._initial_state.velocity
         obs_ini_ori = dyn_obs._initial_state.orientation
         obs_ini_acc = dyn_obs._initial_state.acceleration
+        obs_ini_jerk = DEFAULT_VAL
         obs_ini_yaw = dyn_obs._initial_state.yaw_rate
         ST_RECTANGLE_obs_ini_pos = "{" + ", ".join(map(str, obs_ini_pos)) + "}"
-        initCS_str = f"const ST_CSTATE initCS{obs_id} = {{" + ", ".join([ST_RECTANGLE_obs_ini_pos, f"{obs_ini_vel}", f"{obs_ini_ori}", f"{obs_ini_acc}", f"{obs_ini_yaw}"]) + "};"
+        initCS_str = f"const ST_DSTATE initCS{obs_id} = {{" + ", ".join([ST_RECTANGLE_obs_ini_pos, 
+                    f"{obs_ini_vel}", f"{obs_ini_ori}", f"{obs_ini_acc}", f"{obs_ini_jerk}" ,f"{obs_ini_yaw}"]) + "};"
         initCS_str_set.append(initCS_str)
 
         # const ST_RECTANGLE shapeObs1 = {{225, 350}, 200, 450, 0};       // shape of a moving obstacle 
-        obs_ini_pos_int = "{" + ", ".join(map(str, (obs_ini_pos*SCALE).astype(int))) + "}"
-        shapeObs_str = f"const ST_RECTANGLE shapeObs{obs_id} = {{" + ", ".join([obs_ini_pos_int, f"{int(dyn_obs._obstacle_shape._width*SCALE)}", f"{int(dyn_obs._obstacle_shape._length*SCALE)}", f"{int(dyn_obs._obstacle_shape._orientation*SCALE)}"]) + "};"
+        obs_ini_pos_int = "{" + ", ".join(map(str, (obs_ini_pos*pow(BASE,EXPONENT)).astype(int))) + "}"
+        shapeObs_str = f"const ST_RECTANGLE shapeObs{obs_id} = {{" + ", ".join([obs_ini_pos_int, 
+                        f"{int(dyn_obs._obstacle_shape._width*pow(BASE,EXPONENT))}", 
+                        f"{int(dyn_obs._obstacle_shape._length*pow(BASE,EXPONENT))}", 
+                        f"{int(dyn_obs._obstacle_shape._orientation*pow(BASE,EXPONENT))}"]) + "};"
         shapeObs_str_set.append(shapeObs_str)
 
         # const ST_PAIR trajectory1[MAXTP] = {{0,{{-20.0,-0.4},3.5,0.0,0.0,0.0}},{1,{{-23.5,-0.4},3.5,0.0,0.0,0.0}},{MAXTIME,{{15.0,-0.4},3.5,0.0,0.0,0.0}},PHOLDER,PHOLDER}; // the trajectory
@@ -172,17 +193,18 @@ for xml_file in os.listdir(input_file_folder):
                 # if not given, use the default value
                 spd = dyn_obs_pos.velocity if hasattr(dyn_obs_pos, 'velocity') else DEFAULT_VAL
                 acc = dyn_obs_pos.acceleration if hasattr(dyn_obs_pos, 'acceleration') else DEFAULT_VAL
+                jerk = DEFAULT_VAL
                 yaw = DEFAULT_VAL
                 pos_str = "{" + ", ".join(map(str, center_pos)) + "}"
-                veh_str = "{" + ", ".join([pos_str, f"{spd}", f"{ori}", f"{acc}", f"{yaw}"]) + "}"
+                veh_str = "{" + ", ".join([pos_str, f"{spd}", f"{ori}", f"{acc}", f"{jerk}", f"{yaw}"]) + "}"
                 traj_str = "{" + str(int(time_step)) + ", " + veh_str + "}"
             trajectory_set.append(traj_str)
         trajectory_str = f"const ST_PAIR trajectory{obs_id}[MAXTP] = {{" + ", ".join(trajectory_set) + "};"
         trajectory_str_set.append(trajectory_str)
 
-        # obs1 = MovingObs(1, initCS1, shapeObs1, tLen1, trajectory1);
-        MovingObs_str = f"obs{obs_id} = MovingObs({obs_id}, initCS{obs_id}, shapeObs{obs_id}, trajectory{obs_id});"
-        MovingObs_str_set.append(MovingObs_str)
+        # obs1 = Obstacle(1, initCS1, shapeObs1, tLen1, trajectory1);
+        Obstacle_str = f"obs{obs_id} = Obstacle({obs_id}, initCS{obs_id}, shapeObs{obs_id}, trajectory{obs_id});"
+        Obstacle_str_set.append(Obstacle_str)
 
         # Obs_naming
         Obs_naming_set.append(f"obs{obs_id}")
@@ -202,7 +224,7 @@ for xml_file in os.listdir(input_file_folder):
             except AttributeError:
                 logging.error("Could not find goal position in the specified format. Exiting.")
                 sys.exit(1)
-        goal_pos = (goal_pos*SCALE).astype(int)
+        goal_pos = (goal_pos*pow(BASE,EXPONENT)).astype(int)
         ST_PLANNING_obs_str = "{" + ", ".join(map(str, goal_pos)) + "}"
         ST_PLANNING_str_set.append(ST_PLANNING_obs_str)
 
@@ -210,10 +232,18 @@ for xml_file in os.listdir(input_file_folder):
         ego_ini_vel = init_ego.velocity
         ego_ini_ori = init_ego.orientation
         ego_ini_acc = init_ego.acceleration
+        ego_ini_jerk = DEFAULT_VAL
         ego_ini_yaw = init_ego.yaw_rate
-        ST_RECTANGLE_ego_ini_pos = "{" + ", ".join(map(str, ego_ini_pos)) + "}"
-        init_ego_str = "const ST_CSTATE initEgo = {" + ", ".join([ST_RECTANGLE_ego_ini_pos, f"{ego_ini_vel}", f"{ego_ini_ori}", f"{ego_ini_acc}", f"{ego_ini_yaw}"]) + "};\n"
-        init_ego_shape_str = "const ST_RECTANGLE initShapeEgo = {{" + ", ".join(map(str, (ego_ini_pos*SCALE).astype(int))) + "}, 100, 450, 0};"
+        #ST_RECTANGLE_ego_ini_pos = "{" + ", ".join(map(str, ego_ini_pos)) + "}"
+        DOUBLE_ego_ini_pos = "{" + ", ".join(map(str, ego_ini_pos)) + "}"
+        INT32_ego_ini_pos = "{" + ", ".join(map(str, (ego_ini_pos*pow(BASE,EXPONENT)).astype(int))) + "}"
+        init_ego_str = "const ST_DSTATE initEgo = {" + ", ".join([DOUBLE_ego_ini_pos, f"{ego_ini_vel}", 
+                        f"{ego_ini_ori}", f"{ego_ini_acc}", f"{ego_ini_jerk}", f"{ego_ini_yaw}"]) + "};\n"
+        #init_ego_shape_str = "const ST_RECTANGLE initShapeEgo = {{" + ", ".join(map(str, (ego_ini_pos*pow(BASE,EXPONENT)).astype(int))) + "}, 100, 450, 0};"
+        #init_ego_shape_str = "const ST_RECTANGLE initShapeEgo = {" + ", ".join([INT32_ego_ini_pos, f"{(EV_WIDTH*pow(BASE,EXPONENT)).astype(int)}", 
+        #                    f"{(EV_LENGTH*pow(BASE,EXPONENT)).astype(int)}", f"{(EV_ORI*pow(BASE,EXPONENT)).astype(int)}"]) + "};"
+        init_ego_shape_str = "const ST_RECTANGLE initShapeEgo = {" + ", ".join([INT32_ego_ini_pos, f"{EV_WIDTH*pow(BASE,EXPONENT)}", 
+                            f"{int(EV_LENGTH*pow(BASE,EXPONENT))}", f"{EV_ORI*pow(BASE,EXPONENT)}"]) + "};"
         ego_init_str_set.append(init_ego_str)
         ego_init_str_set.append(init_ego_shape_str)
 
@@ -221,7 +251,7 @@ for xml_file in os.listdir(input_file_folder):
     ST_EGO_INIT_str = "".join(ego_init_str_set)
 
     # %% construct the definition and hyperparameter declaration in c code
-    P_str = "const int P = 1;"
+    P_str = f"const int P = {P};"
     MAX_TIME_str = f"const uint16_t MAXTIME = {MAXT};"
     MAXL_str = f"const int MAXL = {MAXL};"
     NONE_str = "const int NONE = -1;"
@@ -232,19 +262,32 @@ for xml_file in os.listdir(input_file_folder):
     MAXPRE_str = f"const int MAXPRE = {MAXPRE};"
     MAXSUC_str = f"const int MAXSUC = {MAXSUC};"
     TIMESTEPSIZE_str = f"const double TIMESTEPSIZE = {TIMESTEPSIZE};"
-    SCALE_str = "const double SCALE = 10000.0;"
-    THRES_str = "const int THRESHOLD = 200;"
-    PHOLDER_str = "const ST_PAIR PHOLDER = {NONE,{{NONE,NONE},NONE,NONE,NONE,NONE}};"
+    THRES_str = f"const double THRESHOLD = {THRESHOLD};"
+    RADAR_str = f"const double RADAR = {RADAR};"
+    BASE_str = f"const uint8_t BASE = {BASE};"
+    EXPONENT_str = f"const uint8_t EXPONENT = {EXPONENT};"
+    N1_str = f"const uint8_t N1 = {N1};"
+    N2_str = f"const uint8_t N2 = {N2};"
+    MAXACT_str = f"const uint8_t MAXACT = {MAXACT};"
+    ACTTYPE_str = "typedef int[0,MAXACT-1] act_id_t;"
+    #MAXOBS_str = f"const uint8_t MAXOBS = {MAXOBS};"
+    if(MAXOBS == 0):
+        MAXOBS_str = f"const uint8_t MAXOBS = 1;"
+    else:
+        MAXOBS_str = f"const uint8_t MAXOBS = {MAXOBS};"
+    OBSTYPE_str = "typedef int[0,MAXOBS-1] obs_id_t;"
+
+    PHOLDER_str = "const ST_PAIR PHOLDER = {NONE,{{NONE,NONE},NONE,NONE,NONE,NONE,NONE}};"
     
     if Obs_naming_set == []:
-        system_str = "system Decisions, egoController, egoDynamics;"
+        system_str = "system timer, move, turn, controller, dynamics, rewardMachine;"
     else:
-        system_str = "system Decisions, egoController, egoDynamics, " + ", ".join(Obs_naming_set) + ";"
+        system_str = "system timer, " + ", ".join(Obs_naming_set) + ", move, turn, controller, dynamics, rewardMachine;"
 
     # %% write in the xml templates
     scenario_prompt = "<declaration>// Generated scenario starts"
     moving_obs_prompt = "<system>// Generated moving obstacles starts"
-    model_prompt = "// Generated model instances start"
+    model_prompt = "// Generated model instances starts"
     ego_prompt = "// Generated ego vehicle starts"
 
     with open(output_file, 'w') as file:
@@ -261,9 +304,17 @@ for xml_file in os.listdir(input_file_folder):
                 file.write(MAXTP_str + "\n")
                 file.write(MAXPRE_str + "\n")
                 file.write(MAXSUC_str + "\n")
-                file.write(SCALE_str + "\n")
                 file.write(THRES_str + "\n")
                 file.write(TIMESTEPSIZE_str + "\n")
+                file.write(RADAR_str + "\n")
+                file.write(N1_str + "\n")
+                file.write(N2_str + "\n")
+                file.write(MAXACT_str + "\n")
+                file.write(ACTTYPE_str + "\n")
+                file.write(BASE_str + "\n")
+                file.write(EXPONENT_str + "\n")
+                file.write(MAXOBS_str + "\n")
+                file.write(OBSTYPE_str + "\n")
                 
                 # Call the function to write the large static block
                 write_large_block(file)
@@ -297,7 +348,7 @@ for xml_file in os.listdir(input_file_folder):
                         file.write(PHOLDER_str + "\n")
                         declear_flag = 1
                     file.write(trajectory_str_set[i] + "\n")
-                    file.write(MovingObs_str_set[i] + "\n")
+                    file.write(Obstacle_str_set[i] + "\n")
 
             if line.strip() == ego_prompt:
                 file.write(ST_EGO_INIT_str + "\n")

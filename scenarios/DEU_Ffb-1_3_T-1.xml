@@ -5600,15 +5600,15 @@
       <initialState>
          <position>
             <point>
-               <x>0</x>
-               <y>0</y>
+               <x>0.0</x>
+               <y>0.0</y>
             </point>
          </position>
          <velocity>
-            <exact>11</exact>
+            <exact>12</exact>
          </velocity>
          <orientation>
-            <exact>0</exact>
+            <exact>0.0</exact>
          </orientation>
          <yawRate>
             <exact>0.000000</exact>

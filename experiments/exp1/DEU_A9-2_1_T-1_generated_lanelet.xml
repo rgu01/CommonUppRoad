@@ -694,7 +694,7 @@ void initialize() {
 </declaration>
 		<location id="id4" x="-340" y="-136">
 			<name x="-433" y="-161">Turn_Const</name>
-			<label kind="comments" x="-34" y="-51">One cannot turn and 
+			<label kind="comments" x="110" y="-42">One cannot turn and 
 acc or brake 
 simutaneously.</label>
 		</location>
@@ -702,7 +702,7 @@ simutaneously.</label>
 			<name x="-187" y="136">Straight_Dec</name>
 		</location>
 		<location id="id6" x="-68" y="-136">
-			<name x="-51" y="-170">Straight_Acc</name>
+			<name x="-93" y="-187">Straight_Acc</name>
 		</location>
 		<location id="id7" x="-204" y="0">
 			<name x="-289" y="-17">Choose</name>
@@ -774,7 +774,7 @@ simutaneously.</label>
 			<target ref="id7"/>
 			<label kind="synchronisation" x="-357" y="-68">chooseEgo?</label>
 			<label kind="assignment" x="-357" y="-51">keep()</label>
-			<label kind="comments" x="-34" y="25">Keeps moving with 
+			<label kind="comments" x="110" y="34">Keeps moving with 
 this angle</label>
 			<nail x="-340" y="-68"/>
 		</transition>
@@ -789,7 +789,7 @@ this angle</label>
 		<transition id="id18">
 			<source ref="id7"/>
 			<target ref="id4"/>
-			<label kind="select" x="-263" y="-93">d:TURN_t</label>
+			<label kind="select" x="-263" y="-93">d:int[0,1]</label>
 			<label kind="guard" x="-263" y="-76">canTurn(d)</label>
 			<label kind="assignment" x="-263" y="-59">opTurn(d)</label>
 			<nail x="-272" y="-136"/>

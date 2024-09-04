@@ -1,0 +1,16 @@
+---
+triple:          'arm64-apple-darwin'
+binary-path:     '/Users/rgu01/Projects/CommonUppRoad/collision_detect/detect_offroad'
+relocations:
+  - { offsetInCU: 0x26, offset: 0x26, size: 0x8, addend: 0x0, symName: _i2d, symObjAddr: 0x0, symBinAddr: 0x1000007E4, symSize: 0x34 }
+  - { offsetInCU: 0x41, offset: 0x41, size: 0x8, addend: 0x0, symName: _i2d, symObjAddr: 0x0, symBinAddr: 0x1000007E4, symSize: 0x34 }
+  - { offsetInCU: 0x77, offset: 0x77, size: 0x8, addend: 0x0, symName: _d2i, symObjAddr: 0x34, symBinAddr: 0x100000818, symSize: 0x30 }
+  - { offsetInCU: 0xAD, offset: 0xAD, size: 0x8, addend: 0x0, symName: _min, symObjAddr: 0x64, symBinAddr: 0x100000848, symSize: 0x48 }
+  - { offsetInCU: 0xE3, offset: 0xE3, size: 0x8, addend: 0x0, symName: _max, symObjAddr: 0xAC, symBinAddr: 0x100000890, symSize: 0x48 }
+  - { offsetInCU: 0x119, offset: 0x119, size: 0x8, addend: 0x0, symName: _calculateCornerPoints, symObjAddr: 0xF4, symBinAddr: 0x1000008D8, symSize: 0x38C }
+  - { offsetInCU: 0x176, offset: 0x176, size: 0x8, addend: 0x0, symName: _check_pts_num, symObjAddr: 0x480, symBinAddr: 0x100000C64, symSize: 0xA8 }
+  - { offsetInCU: 0x1AC, offset: 0x1AC, size: 0x8, addend: 0x0, symName: _point_in_polygon, symObjAddr: 0x528, symBinAddr: 0x100000D0C, symSize: 0x1C8 }
+  - { offsetInCU: 0x252, offset: 0x252, size: 0x8, addend: 0x0, symName: _check_inlane_lane_single, symObjAddr: 0x6F0, symBinAddr: 0x100000ED4, symSize: 0x198 }
+  - { offsetInCU: 0x2DE, offset: 0x2DE, size: 0x8, addend: 0x0, symName: _check_inlane_laneNet, symObjAddr: 0x888, symBinAddr: 0x10000106C, symSize: 0x134 }
+  - { offsetInCU: 0x369, offset: 0x369, size: 0x8, addend: 0x0, symName: _main, symObjAddr: 0x9BC, symBinAddr: 0x1000011A0, symSize: 0x1084 }
+...

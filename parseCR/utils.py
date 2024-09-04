@@ -5,19 +5,19 @@ typedef int[-1,65535] id_t;
 typedef struct {
     int32_t x;
     int32_t y;
-}ST_DPOINT;
+}ST_IPOINT;
 
 typedef struct {
     double x;
     double y;
-}ST_CPOINT;
+}ST_DPOINT;
 
 typedef struct {
-    ST_DPOINT ends[2];
+    ST_IPOINT ends[2];
 }ST_DLINE;
 
 typedef struct {
-    ST_DPOINT points[MAXP];
+    ST_IPOINT points[MAXP];
     bool dashLine;
 }ST_BOUND;
 
@@ -40,21 +40,23 @@ typedef struct {
 }ST_DETECTION;
 
 typedef struct {
-    ST_CPOINT position;
+    ST_DPOINT position;
     double velocity;
     double orientation;
     double acceleration;
+    double accRate;
     double yawRate;
-}ST_CSTATE;
+}ST_DSTATE;
 
 typedef struct {
-    ST_DPOINT position;
+    ST_IPOINT position;
     int32_t velocity;
     int32_t orientation;
     int32_t acceleration;
+    int32_t accRate;
     int32_t yawRate;
     ST_DETECTION detection;
-}ST_DSTATE;
+}ST_ISTATE;
 
 typedef struct {
     hybrid clock x;
@@ -62,30 +64,31 @@ typedef struct {
     hybrid clock velocity;
     hybrid clock orientation;
     hybrid clock acceleration;
-    hybrid clock yawRate;
-}ST_VARIABLES;
+    //hybrid clock accRate;
+    //hybrid clock yawRate;
+}ST_DYNAMICS;
 
 typedef struct {
-    ST_DPOINT center;
+    ST_IPOINT center;
     int32_t width;
     int32_t length;
     int32_t orientation;
 }ST_RECTANGLE;
 
 typedef struct {
-    int maxVelocity;
-    int minVelocity;
-    int maxOrientation;
-    int minOrientation;
+    int32_t maxVelocity;
+    int32_t minVelocity;
+    int32_t maxOrientation;
+    int32_t minOrientation;
 }ST_RULES;
 
 typedef struct {
-    ST_DPOINT goal;
+    ST_IPOINT goal;
 }ST_PLANNING;
 
 typedef struct {
     int32_t time;
-    ST_CSTATE cState;
+    ST_DSTATE dState;
 }ST_PAIR;
 """
     file.write(large_block)

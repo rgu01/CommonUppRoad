@@ -13,3 +13,6 @@ CommonRoad-io
 ffmpeg 1.4
 
 Uppaal 5.1.10-beta5
+
+# Trouble shoting
+"MovieWriter ffmpeg unavailable". [Solution](https://stackoverflow.com/questions/60033397/moviewriter-ffmpeg-unavailable-trying-to-use-class-matplotlib-animation-pillo).

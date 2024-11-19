@@ -16,3 +16,13 @@ Uppaal 5.1.10-beta5
 
 # Troubleshooting
 "MovieWriter ffmpeg unavailable". [Solution](https://stackoverflow.com/questions/60033397/moviewriter-ffmpeg-unavailable-trying-to-use-class-matplotlib-animation-pillo).
+
+# Citation
+@inproceedings{gu2024commonupproad,
+  title={CommonUppRoad: A Framework of Formal Modelling, Verifying, Learning, and Visualisation of Autonomous Vehicles},
+  author={Gu, Rong and Tan, Kaige and H{\o}eg-Petersen, Andreas Holck and Feng, Lei and Larsen, Kim Guldstrand},
+  booktitle={International Symposium on Leveraging Applications of Formal Methods},
+  pages={385--404},
+  year={2024},
+  organization={Springer}
+}

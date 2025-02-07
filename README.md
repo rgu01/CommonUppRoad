@@ -12,6 +12,8 @@ CommonRoad-io
 
 ffmpeg 1.4
 
+imageio-2.37.0
+
 Uppaal 5.1.10-beta5
 
 # Troubleshooting
